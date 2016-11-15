@@ -1,0 +1,17 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>ml.iamwahtiam</groupId>
+  <artifactId>tao</artifactId>
+  <version>0.0.1</version>
+  <name>tao</name>
+  <description>As Tao Te Ching says, everything derived from tao.</description>
+  <url>http://iamwhatiam.ml</url>
+  <organization>
+  	<name>I AM WHAT I AM</name>
+  	<url>http://iamwhatiam.ml</url>
+  </organization>
+  <scm>
+  	<url>https://github.com/iMinusMinus/tao.git</url>
+  	<developerConnection>iMinusMinus</developerConnection>
+  </scm>
+</project>
