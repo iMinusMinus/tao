@@ -21,52 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package ml.iamwhatiam.tao.domain;
+package ml.iamwhatiam.tao.util;
 
-import java.io.Serializable;
-import java.util.Date;
-
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
-import javax.validation.constraints.NotNull;
+import org.junit.Test;
 
 /**
  * @author iMinusMinus
  * @version 0.0.1
  *
  */
-@MappedSuperclass
-public abstract class Taichi implements Serializable {
+public class ReflectionUtilsTest {
+	
+	@Test
+	public void testFindClass() {
+		
+	}
 
-	private static final long serialVersionUID = 5124015363954822808L;
-
-	/**
-	 * object identifier
-	 */
-	@Id
-	@GeneratedValue
-	protected long oid;
-	
-	/**
-	 * founder
-	 */
-	@NotNull
-	protected String createdBy;
-	
-	/**
-	 * create time
-	 */
-	@NotNull
-	protected Date createdDate;
-	
-	/**
-	 * last reviser
-	 */
-	protected String lastModifiedBy;
-	
-	/**
-	 * last revised time
-	 */
-	protected Date lastModifiedDate;
 }
