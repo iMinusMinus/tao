@@ -68,7 +68,7 @@ public class EnumerationValidatorTest {
 		Assert.assertNotNull(msg);
 		EnumerationValidatorTest x = new EnumerationValidatorTest();
 		x.setTer("FAIL");
-		Assert.assertEquals(0, validator.validate(x));
+		Assert.assertEquals(0, validator.validate(x).size());
 	}
 
 }
