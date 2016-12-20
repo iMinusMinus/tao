@@ -36,6 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * reflection utilities
+ * 
  * @author iMinusMinus
  * @version 0.0.1
  *
@@ -69,9 +71,6 @@ public class ReflectionUtils {
         primitive.put("D", Double.TYPE);
 
         primitive.put("V", Void.TYPE);
-        
-        
-//        invoker = new Weak
     }
 
     /**
@@ -178,6 +177,7 @@ public class ReflectionUtils {
     
     /**
      * based on class name, produce a instance
+     *
      * @see #newInstance(Class)
      * @param clazz class name
      * @return class instance
@@ -188,8 +188,16 @@ public class ReflectionUtils {
 
     /**
      * class must have no arguments constructor!
+     * <ul>we can create a object as below:
+     * <li>new</li>
+     * <li>class.newInstance()</li>
+     * <li>constructor.newInstance()</li>
+     * <li>new ObjectInputStream(is).readObject()</li>
+     * <li>object.clone()</li>
+     * </ul>
+     * 
      * @param clazz class
-     * @return instance or null, if class have not no arguments constructor or the constructor is not public 
+     * @return instance or null, if class have not no arguments constructor 
      */
     public static <T> T newInstance(Class<T> clazz) {
         assert(!clazz.isInterface());
@@ -221,7 +229,7 @@ public class ReflectionUtils {
     }
     
     /**
-     * 
+     * @see #invokeMethod(Method, Object, Object[])
      * @param target mostly, a spring bean
      * @param methodName method name
      * @param parameterTypes parameter types

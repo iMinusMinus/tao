@@ -40,7 +40,7 @@ import javax.validation.constraints.NotNull;
 public abstract class Taichi implements Serializable {
 
 	private static final long serialVersionUID = 5124015363954822808L;
-
+	
 	/**
 	 * object identifier
 	 */

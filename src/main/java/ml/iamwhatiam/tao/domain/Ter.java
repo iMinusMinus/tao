@@ -33,8 +33,8 @@ package ml.iamwhatiam.tao.domain;
  */
 public enum Ter {
 	
-	SUCCESS,
-	UNKNOW(),
-	FAIL;
+	NEGATIVE,
+	NEUTRAL,
+	POSITIVE;
 
 }
