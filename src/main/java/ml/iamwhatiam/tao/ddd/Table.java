@@ -1813,75 +1813,313 @@ public class Table {
 		 * @see http://www.postgresql.org/docs/9.5/interactive/datatype.html
 		 *
 		 */
-		public static enum PostgresDataType implements CharacterDataType, NumeberDataType, DateTimeDataType, UserDefinedDataType {
+		public static enum PostgresDataType implements CharacterDataType, NumeberDataType, EnumeratedDataType, DateTimeDataType, UserDefinedDataType {
+			/**
+			 * Numeric Types
+			 */
+			SMALLINT,//alias INT2
+			INTEGER,//alias INT or INT4
 			BIGINT,//alias int8
-			BIGSERIAL,//alias SERIAL8
-			BIT {
+			NUMERIC {//alias DECIMAL
 				
-				private int length;
+				private int precision;
+				
+				private int scale;
+				
+				public int getPrecision() {
+					return precision;
+				}
+				
+				public void set(int precision) {
+					set(precision, 0);
+				}
+				
+				public int getScale() {
+					return scale;
+				}
+				
+				public void set(@Max(1000) int precision, int scale) {
+					this.precision = precision;
+					this.scale =scale;
+				}
+				
+				@Override public String toSQL() {
+					StringBuilder sb = new StringBuilder(super.toSQL());
+					if(precision > 0)
+						sb.append("(").append(precision).append(",").append(scale).append(")");
+					return sb.toString();
+				}
 			},
-			BIT_VARING {//alias VARBIT
-				private int length;
-			},
-			BOOLEAN,//alias BOOL
-			BOX,
-			BYTEA,
+			REAL,//alias FLOAT4, FLOAT(p) 1=<p<=24
+			DOUBLE_PRECISION,//alias FLOAT8, FLOAT(p) 25=<p<=53
+			SMALLSERIAL,//alias SERIAL2
+			SERIAL,//alias SERIAL4
+			BIGSERIAL,//alias SERIAL8
+			
+			/**
+			 * Monetary Types
+			 */
+			MONEY,
+			
+			/**
+			 * Character Types
+			 */
 			CHARACTER {//alias CHAR
-				private int length;
+				
+				private int length = 1;
+				
+				private boolean init = true;
+				
+				public int get() {
+					return length;
+				}
+				
+				public void set(@Min(1) int length) {
+					this.length = length;
+					init = true;
+				}
+				
+				@Override public String toSQL() {
+					StringBuilder sb = new StringBuilder(super.toSQL());
+					if(init)
+						sb.append("(").append(length).append(")");
+					return sb.toString();
+				}
 			},
 			CHARACTER_VARING {//alias VARCHAR
+
 				private int length;
+				
+				public int get() {
+					return length;
+				}
+				
+				public void set(int length) {
+					this.length = length;
+				}
+				
+				@Override public String toSQL() {
+					StringBuilder sb = new StringBuilder(super.toSQL());
+					if(length > 0)
+						sb.append("(").append(length).append(")");
+					return sb.toString();
+				}
 			},
-			CIDR,
-			CIRCLE,
+			TEXT,
+			
+			/**
+			 * Binary Data Types
+			 */
+			BYTEA,
+			
+			/**
+			 * Date/Time Types
+			 */
 			DATE,
-			DOUBLE_PRECISION,//alias FLOAT8
-			INET,
-			INTEGER,//alias INT or INT4
+			TIME {//alias TIMETZ
+				
+				private int precision;
+				
+				private boolean withTimeZone;
+				
+				private Boolean init = null;
+				
+				public int get() {
+					return precision;
+				}
+				
+				public void set(@Min(0) @Max(6) int precision) {
+					this.precision = precision;
+					init = Boolean.FALSE;
+				}
+				
+				public boolean withTimeZone() {
+					return withTimeZone;
+				}
+				
+				public void set(@Min(0) @Max(10) int precision, boolean withTimeZone) {
+					this.precision = precision;
+					this.withTimeZone = withTimeZone;
+					init = Boolean.TRUE;
+				}
+				
+				@Override public String toSQL() {
+					StringBuilder sb = new StringBuilder(super.toSQL());
+					if(init != null) {
+						sb.append(" (").append(precision).append(")");
+						if(init) {
+							sb.append(" WITH");
+							if(!withTimeZone)
+								sb.append("OUT");
+							sb.append(" TIME ZONE");
+						}	
+					}
+					return sb.toString();
+				}
+			},
+			TIMESTAMP {//alias TIMESTAMPTZ
+				
+				private int precision;
+				
+				private boolean withTimeZone;
+				
+				private Boolean init = null;
+				
+				public int get() {
+					return precision;
+				}
+				
+				public void set(@Min(0) @Max(6) int precision) {
+					this.precision = precision;
+					init = Boolean.FALSE;
+				}
+				
+				public boolean withTimeZone() {
+					return withTimeZone;
+				}
+				
+				public void set(@Min(0) @Max(6) int precision, boolean withTimeZone) {
+					this.precision = precision;
+					this.withTimeZone = withTimeZone;
+					init = Boolean.TRUE;
+				}
+				
+				@Override public String toSQL() {
+					StringBuilder sb = new StringBuilder(super.toSQL());
+					if(init != null) {
+						sb.append(" (").append(precision).append(")");
+						if(init) {
+							sb.append(" WITH");
+							if(!withTimeZone)
+								sb.append("OUT");
+							sb.append(" TIME ZONE");
+						}	
+					}
+					return sb.toString();
+				}
+			},
 			INTERVAL {
 				private int intervalClass;
 				private int precision;
+				private final int YEAR_TO_MONTH = 0, DAY_TO_HOUR = 1, DAY_TO_MINUTE = 2, DAY_TO_SECOND = 3, HOUR_TO_MINUTE = 4, HOUR_TO_SECOND = 5, MINUTE_TO_SECOND = 6;
+				
+				@Override public String toSQL() {
+					return null;//TODO
+				}
 			},
+			
+			/**
+			 * Boolean Type
+			 */
+			BOOLEAN,//alias BOOL: true, false, unknow
+			
+			/**
+			 * Enumerated Types
+			 */
+			ENUM {//create type name as ENUM(strings...)
+				
+				private String[] names;
+				
+				public String[] names() {
+					return names;
+				}
+
+				public void set(String... names) {
+					this.names = names;
+				}
+			},
+			
+			/**
+			 * Geometric Types
+			 */
+			POINT,//(x, y)
+			LINE,//{A,B,C}
+			LSEG,//((x1,y1),(x2,y2))
+			BOX,//((x1,y1),(x2,y2))
+			PATH,//close path: ((x1,y1),...) or open path: [(x1,y1),...]
+			POLYGON,//((x1,y1),...)
+			CIRCLE,//<(x,y),r>
+			
+			/**
+			 * Network Address Types
+			 */
+			CIDR,
+			INET,
+			MACADDR,
+			
+			/**
+			 * Bit String Types
+			 */
+			BIT {
+				
+				private int length = 1;
+				
+				private boolean init = false;
+				
+				public int get() {
+					return length;
+				}
+				
+				public void set(int length) {
+					this.length = length;
+					init = true;
+				}
+				
+				@Override public String toSQL() {
+					StringBuilder sb = new StringBuilder(super.toSQL());
+					if(init)
+						sb.append("(").append(length).append(")");
+					return sb.toString();
+				}
+			},
+			BIT_VARING {//alias VARBIT
+				
+				private int length;
+				
+				public int get() {
+					return length;
+				}
+				
+				public void set(int length) {
+					this.length = length;
+				}
+				
+				@Override public String toSQL() {
+					StringBuilder sb = new StringBuilder(super.toSQL());
+					if(length > 0)
+						sb.append("(").append(length).append(")");
+					return sb.toString();
+				}
+			},
+			
+			/**
+			 * Text Search Types
+			 */
+			TSQUERY,
+			TSVECTOR,
+			
+			UUID,
+			
+			XML,
+			
 			JSON,
 			JSONB,
-			LINE,
-			LSEG,
-			MACADDR,
-			MONEY,
-			NUMERIC {//alias DECIMAL
-				private int precision;
-				private int scale;
-			},
-			PATH,
+			
+			//Arrays: TEXT[][], INTEGER[][], ...
+			
+			//Composite Types: CREATE TYPE name AS {col type}
+			
+			//Range Types: INT4RANGE, INT8RANGE, NUMRANGE, TSRANGE, DATERANGE
+			
+			//Object Identifier Types: oid alias as regproc, regprocedure, regoper, regoperator, regclass, regtype, regrole, regnamespace, regconfig, or regdictionary
+			
 			PG_SLN {
 				@Override public String toSQL() {
 					return "PG_SLN";
 				}
 			},
-			POINT,
-			POLYGON,
-			REAL,//alias FLOAT4
-			SMALLINT,//alias INT2
-			SMALLSERIAL,//alias SERIAL2
-			SERIAL,//alias SERIAL4
-			TEXT,
-			TIME {//alias TIMETZ
-				private int precision;
-				private boolean withTimeZone;
-			},
-			TIMESTAMP {//alias TIMESTAMPTZ
-				private int precision;
-				private boolean withTimeZone;
-			},
-			TSQUERY,
-			TSVECTOR,
-			TXID_SSNAPSHOT {
-				@Override public String toSQL() {
-					return "TXID_SSNAPSHOT";
-				}
-			},
-			UUID,
-			XML,
+			
+			//Pseudo-Types: cannot be used as a column data type
 			;
 
 			public String toSQL() {
@@ -1889,43 +2127,43 @@ public class Table {
 			}
 
 			public boolean withTimeZone() {
-				// TODO Auto-generated method stub
-				return false;
+				throw new AbstractMethodError();
 			}
 
 			public void set(int precision, boolean withTimeZone) {
-				// TODO Auto-generated method stub
-				
+				throw new AbstractMethodError();
 			}
 
 			public void set(int precision, int intervalClass, int fracionalPrecision) {
-				// TODO Auto-generated method stub
-				
+				throw new AbstractMethodError();
 			}
 
 			public int getPrecision() {
-				// TODO Auto-generated method stub
-				return 0;
+				throw new AbstractMethodError();
 			}
 
 			public int getScale() {
-				// TODO Auto-generated method stub
-				return 0;
+				throw new AbstractMethodError();
 			}
 
 			public void set(int precision, int scale) {
-				// TODO Auto-generated method stub
-				
+				throw new AbstractMethodError();
 			}
 
 			public int get() {
-				// TODO Auto-generated method stub
-				return 0;
+				throw new AbstractMethodError();
 			}
 
 			public void set(int length) {
-				// TODO Auto-generated method stub
-				
+				throw new AbstractMethodError();
+			}
+
+			public String[] names() {
+				throw new AbstractMethodError();
+			}
+
+			public void set(String... names) {
+				throw new AbstractMethodError();
 			}
 			
 		}
