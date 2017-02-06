@@ -23,6 +23,7 @@
  */
 package ml.iamwhatiam.tao.ddd;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.validation.constraints.Max;
@@ -1728,6 +1729,7 @@ public class Table {
 			},
 			BINARY_FLOAT,//approximate numeric datatypes
 			BINARY_DOUBLE,//approximate numeric datatypes
+			DATE,
 			TIMESTAMP{
 				
 				private int fraction;
@@ -1757,6 +1759,55 @@ public class Table {
 						sb.append("(").append(fraction).append(")");
 					if(withTimeZone)
 						sb.append(" WITH TIME ZONE");//XXX ignored TIMESTAMP WITH LOCAL TIME ZONE
+					return sb.toString();
+				}
+			},
+			INTERVAL {
+				
+				private int precision;
+				
+				private int fractionalSecondPrecision;
+				
+				private int intervalClass;
+				
+				private final int YEAR_TO_MONTH = 0, DAY_TO_SECOND = 3;
+				
+				public int get() {
+					return precision;
+				}
+
+				public void set(int intervalClass) {
+					this.intervalClass = intervalClass;
+					
+				}
+				
+				public boolean withTimeZone() {
+					throw new NotImplementedException();
+				}
+
+				public void set(int precision, boolean withTimeZone) {
+					throw new NotImplementedException();
+				}
+				
+				public void set(int precision, int intervalClass, int fracionalPrecision) {
+					this.precision = precision;
+					this.intervalClass = intervalClass;
+					this.fractionalSecondPrecision = fracionalPrecision;
+				}
+				
+				public String toSQL() {
+					StringBuilder sb = new StringBuilder("INTERVAL ");
+					if(intervalClass == YEAR_TO_MONTH) 
+						sb.append("YEAR");
+					else sb.append("DAY");
+					if(precision > 0) 
+						sb.append(" (").append(precision).append(")");
+					sb.append(" ");
+					if(intervalClass == YEAR_TO_MONTH)
+						sb.append("MONTH");
+					else sb.append("SECOND");
+					if(fractionalSecondPrecision > 0)
+						sb.append(" (").append(fractionalSecondPrecision).append(")");
 					return sb.toString();
 				}
 			},
@@ -2228,11 +2279,41 @@ public class Table {
 		
 	}
 	
-	public static class Index extends Constraint {
+	public class Index extends Constraint {
 		
+		private String algorithm;
+		
+		public String getAlgorithm() {
+			return algorithm;
+		}
+
+
+		public void setAlgorithm(String algorithm) {
+			if(algorithm == null || algorithm.trim().length() == 0) throw new RuntimeException("if set algorithm, algorithm shoud not be null");
+			switch(dialect) {
+			case MYSQL : 
+				if(!Arrays.asList("BTREE", "HASH", "RTREE").contains(algorithm.toUpperCase())) throw new RuntimeException("Unsupport algorithm: " + algorithm);
+				break;
+			case POSTGRES : 
+				if(!Arrays.asList("btree", "hash", "gist", "gin", "spgist", "brin").contains(algorithm.toUpperCase())) throw new RuntimeException("Unsupport algorithm: " + algorithm);
+				break;
+			case ORACLE : 
+				if(!Arrays.asList("btree", "bitmap").contains(algorithm.toUpperCase())) throw new RuntimeException("Unsupport algorithm: " + algorithm);//TODO
+				break;
+			default:
+			}
+			this.algorithm = algorithm;
+		}
+
+
 		@Override
 		protected String getType() {
 			return "INDEX";
+		}
+		
+		@Override
+		public String toSQL() {
+			return super.toSQL() + (algorithm == null ? "" : "USING " + algorithm);
 		}
 		
 	}
