@@ -21,7 +21,7 @@ CREATE TABLE `${table.name}` (
     </#if>
     <#if table.fks?? && table.fks?size gt 0>
     <#list table.fks as fk>
-    CONSTRAINT <#if fk.name??>${fk.name} </#if>FOREIGN KEY (<#list fk.columns as column>`${column.name}`<#if column?has_next>,</#if></#list>) REFERENCES `${fk.references[0].table.name}` (<#list fk.references as refCol>`${refCol.name}`<#if refCol?has_next>,</#if></#list>)<#if fk?has_next>,</#if>
+    CONSTRAINT <#if fk.name??>${fk.name} </#if>FOREIGN KEY (<#list fk.columns as column>`${column.name}`<#if column?has_next>,</#if></#list>) REFERENCES `${fk.references[0].table.name}` (<#list fk.references as refCol>`${refCol.name}`<#if refCol?has_next>,</#if></#list>)<#sep>,
     </#list>
     </#if>
 )
@@ -37,7 +37,7 @@ ENGINE=InnoDB
 create table ${table.name}
 (
   <#list table.columns as column>
-  ${column.name} ${column.dataType?toSQL} <#if !column.nullable>not null </#if><#if column.defaultValue??>default ${column.defaultValue}</#if><#if column?has_next>,</#if>
+  ${column.name} ${column.dataType?toSQL} <#if !column.nullable>not null </#if><#if column.defaultValue??>default ${column.defaultValue}</#if><#sep>,
   </#list>
 )
 tablespace APPS
@@ -58,25 +58,25 @@ tablespace APPS
 -- Create/Recreate indexes
 <#if table.indexes?? && table.indexes?size gt 0>
 <#list table.indexes as index>
-create <#if index.alorithm??>${index.alorithm}</#if> index ${index.name} on ${table.name} (<#list index.columns as column>${column.name}<#if column?has_next>,</#if></#list>)<#if index.reverse> reverse</#if>;
+create <#if index.alorithm??>${index.alorithm}</#if> index ${index.name} on ${table.name} (<#list index.columns as column>${column.name}<#if column?has_next>,</#if></#list>)<#if index.reverse??> reverse</#if>;
 </#list>
 <#/if>
 -- Create/Recreate primary, unique and foreign key constraint
 <#if table.pk??>
 alter table ${table.name}
-  add constraint ${table.pk.name} primary key (<#list table.pk.columns as column>${column.name}<#if column?has_next>,</#if></#list>);
+  add constraint ${table.pk.name} primary key (<#list table.pk.columns as column>${column.name}<#sep>,</#list>);
 </#if>
 <#if table.uks?? && table.uks?size gt 0>
 <#list table.uks as uk>
 alter table ${table.name}
-  add constraint ${uk.name} unique (<#list uk.columns as column>${column.name}<#if column?has_next>,</#if></#list>);
+  add constraint ${uk.name} unique (<#list uk.columns as column>${column.name}<#sep>,</#list>);
 </#list>
 </#if>
 <#if table.uks?? && table.uks?size gt 0>
 <#list table.fks as fk>
 alter table ${table.name}
-  add constraint ${fk.name} foreign key (<#list fk.columns as column>${column.name}<#if column?has_next>,</#if></#list>)
-  references ${fk.references[0].table.name} (<#list fk.references as column>${column.name}<#if column?has_next>,</#if></#list>);
+  add constraint ${fk.name} foreign key (<#list fk.columns as column>${column.name}<#sep>,</#list>)
+  references ${fk.references[0].table.name} (<#list fk.references as column>${column.name}<#sep>,</#list>);
 </#list>
 </#if>
 -- Create/Recreate check constraints
@@ -118,7 +118,7 @@ CREATE TABLE public.${table.name}
     </#if>
     <#if table.checks?? && table.checks?size gt 0>
     <#list table.checks as ck>
-    CONSTRAINT ${ck.name} CHECK (${ck.searchCondition})<#if ck?has_next>,</#if>
+    CONSTRAINT ${ck.name} CHECK (${ck.searchCondition})<#sep>,
     </#list>
     </#if>
 )
@@ -144,7 +144,7 @@ COMMENT ON TABLE public.${table.name}
 
 CREATE INDEX ${index.name}
     ON public.${table.name} <#if index.algorithm??>USING ${index.algorithm}</#if>
-    (<#list index.columns as column>${column.name}<#if column?has_next>,</#if></#list>)
+    (<#list index.columns as column>${column.name}<#sep>,</#list>)
     TABLESPACE pg_default;
 </#list>
 </#if>
