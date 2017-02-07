@@ -33,8 +33,36 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 /**
- * DBMS table abstract
- * 
+ * DBMS table abstract:
+ * <ol>
+ * <li>CREATE [GLOBAL | LOCAL TEMPORARY] TABLE <code>name</code>
+ * (
+ * &lt;table element&gt;[, &lt;table element&gt;...]
+ * )
+ * [WITH SYSTEM VERSIONING] [ON COMMIT PRESERVE | DELETE ROWS]</li>
+ * <ul>table element := &lt;column definition&gt; | &lt;table period definition &gt; | &lt;table constraint definition&gt; | &lt;like clause &gt;
+ * <li>column definition := <code>columnName</code> [<code>data type</code> | <code> domain type</code>]
+ * [DEFAULT <code>defaultValue</code> | &lt;identity column specification&gt; | &lt;generation clause&gt; | GENERATED ALWAYS AS ROW START | GENERATED ALWAYS AS ROW END]
+ * [[CONSTRAINT <code>constraintName</code>] NOT NULL | UNIQUE | PRIMARY KEY | 
+ * REFERENCES <code>referTableName</code> (<code>referColumnName</code>[{, <code>referColumnName</code>}...]) 
+ * [MATCH FULL | PARTIAL | SIMPLE] 
+ * [ON DELETE CASCADE | SET NULL | SET DEFAULT | RESTRICT | NO ACTION] 
+ * [ON UPDATE CASCADE | SET NULL | SET DEFAULT | RESTRICT | NO ACTION] |
+ * CHECK (<code>searchCondition</code>)]
+ * [COLLATE <code>schema.</code><code>collate</code>]</li>
+ * <li>table period definition := PERIOD FOR SYSTEM_TIME | PERIOD FOR <code>appTime</code>(<code>beginColumnName</code>,<code>endColumnName</code>)
+ * <li>table constraint definition := [CONSTRAINT <code>name</code>]  [INITIALLY DEFERRED | INITIALLY IMMEDIATE [[NOT] DEFERRABLE] [[NOT] ENFORCED]] | 
+ * [NOT] DEFERRABLE [INITIALLY DEFERRED | INITIALLY IMMEDIATE [[NOT] DEFERRABLE] [[NOT] ENFORCED] |
+ * [NOT] ENFORCED]
+ * <li>like clause := LIKE <code>tableName</code> [INCLUDING IDENTITY | EXCLUDING IDENTITY | INCLUDING DEFAULTS | EXCLUDING DEFAULTS | INCLUDING GENERATED | EXCLUDING GENERATED]
+ * </ul>
+ * <li>CREATE [GLOBAL | LOCAL TEMPORARY] TABLE <code>name</code>
+ * OF [[<code>catalog.</code>]<code>schema.</code>]<code>referTable</code> [UNDER [<code>schema</code>.]<code>tableName</code>] [(&lt;typed table element&gt;[, &lt;typed table element&gt;]...)]
+ * [WITH SYSTEM VERSIONING] [ON COMMIT PRESERVE | DELETE ROWS]</li>
+ * <li>CREATE [GLOBAL | LOCAL TEMPORARY] TABLE <code>name</code>
+ * [(<code>columnName</code>[{, <code>columnName</code>}...])] AS  ([WITH [RECURSIVE] &lt;with list&gt;] &lt;query expression body&gt; [ORDER BY &lt;sort specification list&gt;] [&lt;result offset clause&gt;]  [&lt;fetch first clause&gt;]) 
+ * WITH NO DATA | WITH DATA [WITH SYSTEM VERSIONING] [ON COMMIT PRESERVE | DELETE ROWS]</li>
+ * </ol>
  * @author iMinusMinus
  * @since 2017-01-24
  * @version 0.0.1
@@ -1770,7 +1798,7 @@ public class Table {
 				
 				private int intervalClass;
 				
-				private final int YEAR_TO_MONTH = 0, DAY_TO_SECOND = 3;
+				private final int YEAR_TO_MONTH = 0/*, DAY_TO_SECOND = 3*/;
 				
 				public int get() {
 					return precision;
@@ -2049,13 +2077,62 @@ public class Table {
 					return sb.toString();
 				}
 			},
-			INTERVAL {
+			INTERVAL {//XXX pgAdmin: interval year to month --auto translate --> "interval year to month"(65535), but exec this create script will fail
 				private int intervalClass;
-				private int precision;
+				
+				private int length;
+				
 				private final int YEAR_TO_MONTH = 0, DAY_TO_HOUR = 1, DAY_TO_MINUTE = 2, DAY_TO_SECOND = 3, HOUR_TO_MINUTE = 4, HOUR_TO_SECOND = 5, MINUTE_TO_SECOND = 6;
 				
+				public int get() {
+					return length;
+				}
+
+				public void set(int intervalClass) {
+					this.intervalClass = intervalClass;
+					
+				}
+				
+				public boolean withTimeZone() {
+					throw new NotImplementedException();
+				}
+
+				public void set(int precision, boolean withTimeZone) {
+					throw new NotImplementedException();
+				}
+				
+				public void set(int length, int intervalClass, int fracionalPrecision) {
+					this.length = length;
+					this.intervalClass = intervalClass;
+				}
 				@Override public String toSQL() {
-					return null;//TODO
+					StringBuilder sb = new StringBuilder("INTERVAL ");
+					switch (intervalClass) {
+					case YEAR_TO_MONTH:
+						sb.append("YEAR TO MONTH");
+						break;
+					case DAY_TO_HOUR:
+						sb.append("DAY TO HOUR");
+						break;
+					case DAY_TO_MINUTE:
+						sb.append("DAY TO MINUTE");
+						break;
+					case DAY_TO_SECOND:
+						sb.append("DAY TO SECOND");
+						break;
+					case HOUR_TO_MINUTE:
+						sb.append("HOUR TO MINUTE");
+						break;
+					case HOUR_TO_SECOND:
+						sb.append("HOUR TO SECOND");
+						break;
+					case MINUTE_TO_SECOND:
+						sb.append("MINUTE TO SECOND");
+						break;
+					default:
+						throw new IllegalArgumentException();
+					}
+					return sb.toString();
 				}
 			},
 			
@@ -2283,6 +2360,8 @@ public class Table {
 		
 		private String algorithm;
 		
+//		private boolean reverse = false;
+		
 		public String getAlgorithm() {
 			return algorithm;
 		}
@@ -2295,10 +2374,10 @@ public class Table {
 				if(!Arrays.asList("BTREE", "HASH", "RTREE").contains(algorithm.toUpperCase())) throw new RuntimeException("Unsupport algorithm: " + algorithm);
 				break;
 			case POSTGRES : 
-				if(!Arrays.asList("btree", "hash", "gist", "gin", "spgist", "brin").contains(algorithm.toUpperCase())) throw new RuntimeException("Unsupport algorithm: " + algorithm);
+				if(!Arrays.asList("btree", "hash", "gist", "gin", "spgist", "brin").contains(algorithm.toLowerCase())) throw new RuntimeException("Unsupport algorithm: " + algorithm);
 				break;
 			case ORACLE : 
-				if(!Arrays.asList("btree", "bitmap").contains(algorithm.toUpperCase())) throw new RuntimeException("Unsupport algorithm: " + algorithm);//TODO
+				if(!Arrays.asList("btree", "bitmap").contains(algorithm.toLowerCase())) throw new RuntimeException("Unsupport algorithm: " + algorithm);
 				break;
 			default:
 			}
@@ -2331,9 +2410,9 @@ public class Table {
 		@Size(min = 1)
 		private Column[] references;
 		
-//		private Action update = Action.RESTRICT;
+//		private Action onUpdate = Action.RESTRICT;
 //		
-//		private Action delete = Action.RESTRICT;
+//		private Action onDelete = Action.RESTRICT;
 		
 		public ForeignKey(String name, Column[] self, Column[] reference) {
 			this.name = name;
@@ -2368,25 +2447,27 @@ public class Table {
 		public enum Action {
 			RESTRICT,
 			CASCADE,
-			SET_NULL,NO_ACTION
+			SET_NULL,
+			SET_DEFAULT,
+			NO_ACTION
 		}*/
 	}
 	
-	public static class Check extends Constraint {//XXX
+	public static class Check extends Constraint {
 		
-		private String expr;
+		private String searchCondition;//exec will return true or false
 		
-		public String getExpr() {
-			return expr;
+		public String getSearchCondition() {
+			return searchCondition;
 		}
 
-		public void setExpr(String expr) {
-			this.expr = expr;
+		public void setSearchCondition(String searchCondition) {
+			this.searchCondition = searchCondition;
 		}
 		
 		@Override
 		public String toSQL() {
-			return "CHECK (" + expr + ")";
+			return "CHECK (" + searchCondition + ")";
 		}
 	}
 	
