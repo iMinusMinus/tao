@@ -26,6 +26,9 @@ package ml.iamwhatiam.tao.ddd;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 
 import freemarker.template.Configuration;
 
@@ -41,16 +44,23 @@ public final class CodeGen {
 	
 	private GeneratePolicy policy;
 	
+	private String[] tpls;
+	
 	public CodeGen() {
 		policy = GeneratePolicy.SOURCE;
+		tpls = new String[] {"Controller.ftl", "Service.ftl", "DAO.ftl", "Domain.ftl", "sqlMap.ftl"};
 	}
 	
 	public static void main(String[] args) {
 		if(args == null || args.length < 2) throw new RuntimeException("-d --dialect must be specified!");
 		Dialect dialect = null;
+		String target = null;
 		for(int i = 0, j = args.length; i < j; i += 2) {
-			if("-d".equals(args[i]) || "-dialect".equals(args[i])) {
+			if("-d".equals(args[i]) || "--dialect".equals(args[i])) {
 				dialect = Dialect.valueOf(args[i + 1]);
+			}
+			else if("-t".equals(args[i]) || "--target".equals(args[i])) {
+				target = args[i + 1];
 			}
 		}
 		SQLParser parser = new SQLParser(dialect);
@@ -62,8 +72,29 @@ public final class CodeGen {
 		}
 		Table table = parser.parse(fis);
 		Configuration cfg = new Configuration(Configuration.VERSION_2_3_22);
-        cfg.setClassForTemplateLoading(CodeGen.class, "./");
-        
+        cfg.setClassForTemplateLoading(CodeGen.class, "/ml/iamwhatiam/tao/ddd");
+        CodeGen cg = new CodeGen();
+        for(String tpl : cg.tpls) {
+        	Writer out = null;
+        	String name = null;
+        	try {
+        		switch(cg.policy) {
+        		case SOURCE: 
+	        		name = tpl.substring(0, tpl.indexOf(".") + 1) + "java";
+	        		out = new FileWriter(new File(target + File.separator + name));
+	        		break;
+        		case CLASS:
+        		case RUNTIME: 	
+        			name = tpl.substring(0, tpl.indexOf(".") + 1) + "java";
+        			out = new StringWriter();
+        			break;
+        		default:	
+        		}
+        		cfg.getTemplate(tpl).process(table, out);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+        }
 	}
 
 }
