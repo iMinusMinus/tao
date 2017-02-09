@@ -1740,8 +1740,6 @@ public class Table {
 				}
 				
 				public void set(@Max(38) @Min(1) int precision, @Max(127) @Min(-84) int scale) {
-					if(precision > 38)
-						throw new IllegalArgumentException("Data Type [NUMBER] cannot exceed 38!");
 					if(precision + scale < 0 || scale > precision)
 						throw new IllegalArgumentException("Data Type [NUMBER] |scale| cannot exceed precision!");
 					this.precision = precision;
