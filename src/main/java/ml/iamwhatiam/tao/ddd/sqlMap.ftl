@@ -21,7 +21,7 @@
 <sqlMap namespace="ml.iamwhatiam.tao.ddd.mapper.${module}">
 	<resultMap class="ml.iamwhatiam.tao.ddd.domain.${module?upper_first}" id="${module}ResultMap">
 	<#list ${table.columns} as column>
-		<result column="${column.name}" property="${}" javaType="${}" /><!-- jdbcType=${} -->
+		<result column="${column.name}" property="<@snake2camel snakeCase=column.name />" javaType="${}" /><!-- jdbcType=${column.dataType} -->
 	</#list>
 	</resultMap>
 	

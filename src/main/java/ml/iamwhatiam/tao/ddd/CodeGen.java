@@ -29,6 +29,9 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import freemarker.template.Configuration;
 
@@ -55,6 +58,9 @@ public final class CodeGen {
 		if(args == null || args.length < 2) throw new RuntimeException("-d --dialect must be specified!");
 		Dialect dialect = null;
 		String target = null;
+		Map<String, String> mapping = null;
+		String tmp = null;
+		String namespace = null;
 		for(int i = 0, j = args.length; i < j; i += 2) {
 			if("-d".equals(args[i]) || "--dialect".equals(args[i])) {
 				dialect = Dialect.valueOf(args[i + 1]);
@@ -62,6 +68,23 @@ public final class CodeGen {
 			else if("-t".equals(args[i]) || "--target".equals(args[i])) {
 				target = args[i + 1];
 			}
+			else if("-m".equals(args[i]) || "--mapping".equals(args[i])) {
+				tmp = args[i + 1];
+			}
+			else if("-n".equals(args[i]) || "--namespace".equals(args[i])) {
+				namespace = args[i + 1];
+			}
+		}
+		if(tmp != null) {
+			String[] pairs = tmp.trim().split(";");
+			mapping = new HashMap<String, String>(pairs.length);
+			for(int i = 0, j = pairs.length; i < j; i++) {
+				if(pairs[i] == null || pairs[i].trim().length() == 0) throw new IllegalArgumentException("mapping arguments not correct: " + tmp);
+				String[] pair = pairs[i].split("=");
+				if(pair.length != 2) throw new IllegalArgumentException("mapping arguments must be pair: " + pairs[i]);
+				mapping.put(pair[0], pair[1]);
+			}
+			TransformationHelper.registeDataTypeMapping(dialect, mapping);
 		}
 		SQLParser parser = new SQLParser(dialect);
 		FileInputStream fis;
@@ -70,7 +93,17 @@ public final class CodeGen {
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(String.format("file [%s] not exist", args[args.length - 1]));
 		}
+		Map<String, Object> root = new HashMap<String, Object>();
 		Table table = parser.parse(fis);
+		if(namespace == null) {
+			namespace = table.getCatalog() == null ? table.getSchema() : table.getCatalog();
+			namespace = TransformationHelper.snake2camel(namespace);
+		}
+		JavaBean bean = TransformationHelper.table2bean(table);
+		root.put("table", table);
+		root.put("bean", bean);
+		root.put("namespace", namespace);
+		root.put("date", new Date());
 		Configuration cfg = new Configuration(Configuration.VERSION_2_3_22);
         cfg.setClassForTemplateLoading(CodeGen.class, "/ml/iamwhatiam/tao/ddd");
         CodeGen cg = new CodeGen();
@@ -90,7 +123,7 @@ public final class CodeGen {
         			break;
         		default:	
         		}
-        		cfg.getTemplate(tpl).process(table, out);
+        		cfg.getTemplate(tpl).process(root, out);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

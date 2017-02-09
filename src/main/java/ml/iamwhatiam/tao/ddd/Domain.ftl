@@ -21,25 +21,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
- package ml.iamwhatiam.tao.ddd.${module}.domain;
+package ml.iamwhatiam.tao.ddd.${namespace}.domain;
  
- import ml.iamwhatiam.tao.domain.Taichi;
- <#list ${} as >
+import ml.iamwhatiam.tao.domain.Taichi;
+<#list ${bean.imports} as im>
+${im};
+</#list>
  
- </#list>
- 
- /**
- * 
+/**
+ * <#if bean.comment??>${bean.comment}</#if>
+ *
  * @author iMinusMinus
  * @version 0.0.1
  *
  */
- public class ${bean.name} extends Taichi {
+public class ${bean.name}Domain extends Taichi {
  
- 	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
  	
  	<#list ${bean.properties} as property>
- 	private ${property.type} ${property.name};
+ 	<#if property.comment??>/**${property.comment}*/</#if>
+ 	<#if property.constraints?? && property.constraints?size gt 0>
+ 	<#list property.constraints as constraint>
+ 	@${constraint.type}<#if constraint.values??>(<#list constraint.values as key value><#if key??>${key} = </#if>${value}<#sep>, </#list>)</#if>
+ 	</#list>
+ 	</#if>
+ 	private ${property.type} ${property.name}<#if property.defaultValue??> = ${property.defaultValue}</#if>;
  	</#list>
  	
  	<#list ${bean.properties} as property>
@@ -56,9 +63,9 @@
  	public String toString() {
  	<#-- return String.format(); -->
  	StringBuilder sb = new StringBuilder("{");
- 	<#list ${} as property>
+ 	<#list ${bean.properties} as property>
  	sb.append("${property.name}:");
- 	if(${property.name} instanceof CharSequence) {
+ 	if(${property.type} instanceof CharSequence) {
  		sb.append("\"");
  		sb.append(${property.name});
  		sb.append("\"");
@@ -70,4 +77,4 @@
  	return sb.append("}").toString();
  	}
  
- }
+}

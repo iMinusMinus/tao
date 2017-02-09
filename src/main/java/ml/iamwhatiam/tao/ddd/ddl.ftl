@@ -26,7 +26,7 @@ CREATE TABLE `${table.name}` (
     </#if>
 )
 <#if table.comment??>COMMENT='${table.comment}'</#if>
-COLLATE='utf8_general_ci'
+COLLATE='utf8_general_ci'<#-- utf8_general_ci, utf8_unicode_ci, utf8mb4_general_ci, utf8mb4_unicode_ci -->
 ENGINE=InnoDB
 ;
 </#if>
