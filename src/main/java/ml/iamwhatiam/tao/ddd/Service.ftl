@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 import ml.iamwhatiam.tao.ddd.dao.CrudDao;
 import ml.iamwhatiam.tao.ddd.service.CrudService;
+import ml.iamwhatiam.tao.ddd.${namespace}.TransformationHelper;
 import ml.iamwhatiam.tao.ddd.${namespace}.domain.${bean.name}Domain;
 import ml.iamwhatiam.tao.ddd.${namespace}.vo.${bean.name}VO;
 

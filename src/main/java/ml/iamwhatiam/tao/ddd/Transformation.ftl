@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package ml.iamwhatiam.tao.dao.ddd.${namespace};
+package ml.iamwhatiam.tao.ddd.${namespace};
 
 import ml.iamwhatiam.tao.ddd.${namespace}.domain.${bean.name}Domain;
 import ml.iamwhatiam.tao.ddd.${namespace}.vo.${bean.name}VO;
