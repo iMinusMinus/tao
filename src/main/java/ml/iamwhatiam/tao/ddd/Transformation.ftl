@@ -46,7 +46,7 @@ public class TransformationHelper {
         return domain;
     }
     
-    public static ${bean.name}VO vo2domain(${bean.name}Domain domain) {
+    public static ${bean.name}VO domain2vo(${bean.name}Domain domain) {
         ${bean.name}VO vo = new ${bean.name}VO();
         <#list bean.properties as property>
         vo.set${property.name?upper_first}(domain.get${property.name?upper_first}());
