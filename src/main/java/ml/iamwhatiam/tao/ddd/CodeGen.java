@@ -120,10 +120,11 @@ public final class CodeGen {
 		}
 		Map<String, Object> root = new HashMap<String, Object>();
 		Table table = parser.parse(fis);
-		if(namespace == null) {
+		if(namespace == null)
 			namespace = table.getCatalog() == null ? table.getSchema() : table.getCatalog();
-			namespace = TransformationHelper.snake2camel(namespace);
-		}
+		if(dialect != Dialect.POSTGRES)
+			namespace = namespace.toLowerCase();
+		namespace = TransformationHelper.snake2camel(namespace);
 		JavaBean bean = TransformationHelper.table2bean(table);
 		root.put("table", table);
 		root.put("bean", bean);

@@ -93,7 +93,10 @@ public class TransformationHelper {
 	 */
 	public static JavaBean table2bean(Table table) {
 		if(table == null) return null;
-		JavaBean bean = new JavaBean(snake2camel(table.getName()));
+		String name = table.getName();
+		if(table.getDialect() != Dialect.POSTGRES)//pg case sensitive
+			name = name.toLowerCase();
+		JavaBean bean = new JavaBean(snake2camel(name));
 		Map<String, List<JavaBean.Constraint>> constraints = new HashMap<String, List<JavaBean.Constraint>>();
 		for(Table.Check check : table.getChecks()) {
 			Map<String, JavaBean.Constraint> constraint = check2constraint(bean, check);
@@ -118,7 +121,10 @@ public class TransformationHelper {
 	 * @return meta bean property
 	 */
 	static JavaBean.Property column2property(JavaBean bean, Table.Column column) {
-		JavaBean.Property property = bean.new Property(snake2camel(column.getName()), dataType2javaType(column.getDataType()));
+		String name = column.getName();
+		if(column.getTable().getDialect() != Dialect.POSTGRES)
+			name = name.toLowerCase();
+		JavaBean.Property property = bean.new Property(snake2camel(name), dataType2javaType(column.getDataType()));
 		property.setComment(column.getComment());
 		property.setDefaultValue(column.getDefaultValue());
 		if("Enum".equals(property.getType())) {
