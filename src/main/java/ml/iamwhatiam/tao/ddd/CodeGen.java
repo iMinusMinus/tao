@@ -51,16 +51,26 @@ public final class CodeGen {
 	
 	public CodeGen() {
 		policy = GeneratePolicy.SOURCE;
-		tpls = new String[] {"Controller.ftl", "Service.ftl", "DAO.ftl", "Domain.ftl", "sqlMap.ftl"};
+		tpls = new String[] {"Controller.ftl", "Service.ftl", "DAO.ftl", "VO.ftl", "Domain.ftl", "sqlMap.ftl"};
 	}
 	
 	public static void main(String[] args) {
-		if(args == null || args.length < 2) throw new RuntimeException("-d --dialect must be specified!");
+		if(args == null) System.out.println("Try 'java -jar tao -h' or 'java -jar tao --help' for more information");
+		else if("-h".equals(args[0]) || "--help".equals(args[0])) {
+			System.out.println("-d, --dialect                specify sql dialect. MYSQL, POSTGRES, ORACLE, DB2, SQLSERVER, SYBASE, INFOMIX expected.");
+			System.out.println("-t, --target                 which directory generated fiels will be place in. if not specified, use /ml/iamwhatiam/tao/ddd.");
+			System.out.println("-n, --namespace              parent package of generated files. use table.schema or table.catalog by default.");
+			System.out.println("-c, --config                 Annotation: 1, XML: 2, SpringMVC: 4, Spring: 8, iBatis: 16, Struts: 32, MyBatis: 64, Hibernate: 128");
+			System.out.println("-m, --mapping                how sql data type mapping to java type. for example: TINYINT=byte;NUMBER=java.math.BigDecimal.");
+		}
+		else if(args.length < 2) throw new RuntimeException("-d --dialect must be specified!");
 		Dialect dialect = null;
 		String target = null;
 		Map<String, String> mapping = null;
 		String tmp = null;
 		String namespace = null;
+		int enabled = 0;
+		StringBuilder config = new StringBuilder();
 		for(int i = 0, j = args.length; i < j; i += 2) {
 			if("-d".equals(args[i]) || "--dialect".equals(args[i])) {
 				dialect = Dialect.valueOf(args[i + 1]);
@@ -73,6 +83,16 @@ public final class CodeGen {
 			}
 			else if("-n".equals(args[i]) || "--namespace".equals(args[i])) {
 				namespace = args[i + 1];
+			}
+			else if("-c".equals(args[i]) || "--config".equals(args[i])) {
+				enabled = Integer.parseInt(args[i + 1]);
+				String[] all = {"Annotation", "XML", "SpringMVC", "Spring", "iBatis", "Struts", "MyBatis", "Hibernate"};
+				int power = 0;
+				while(power < all.length) {
+					if((enabled & (1 << power)) != 0)
+						config.append(all[power]).append(",");
+					power++;
+				}
 			}
 		}
 		if(tmp != null) {
@@ -104,12 +124,15 @@ public final class CodeGen {
 		root.put("bean", bean);
 		root.put("namespace", namespace);
 		root.put("date", new Date());
+		root.put("config", config.toString());
 		Configuration cfg = new Configuration(Configuration.VERSION_2_3_22);
         cfg.setClassForTemplateLoading(CodeGen.class, "/ml/iamwhatiam/tao/ddd");
         CodeGen cg = new CodeGen();
         for(String tpl : cg.tpls) {
         	Writer out = null;
         	String name = null;
+//        	if(mvc != "SpringMVC" && tpl == "Controller.ftl") continue;//Struts2 and so on
+//        	if(dao != "iBatis" && tpl == "sqlMap.ftl" || tpl == "DAO.ftl") continue;//Hibernate and so on
         	try {
         		switch(cg.policy) {
         		case SOURCE: 

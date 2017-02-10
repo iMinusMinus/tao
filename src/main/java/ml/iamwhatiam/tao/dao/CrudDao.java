@@ -23,6 +23,8 @@
  */
 package ml.iamwhatiam.tao.dao;
 
+import java.util.List;
+
 /**
  * basic dal: CRUD
  * 
@@ -32,5 +34,21 @@ package ml.iamwhatiam.tao.dao;
  *
  */
 public interface CrudDao<T> {
+	
+	List<T> findAll();
+	
+	List<T> query(T condition, int offset, int limit);
+	
+	long count(T condition);
+	
+	T findOne(long id);
+	
+	long save(T domain);
+	
+	boolean update(T domain);
+	
+	boolean delete(long id);
+	
+	//boolean delete(T domain);
 
 }
