@@ -26,9 +26,12 @@ package ml.iamwhatiam.tao.ddd;
 import java.io.InputStream;
 
 /**
- * SQL parser
+ * SQL parser:
+ * CREATE [] table [] table_name ({column_name data_type []}[, {column_name data_type []} ...]) []
+ * 
  * @see https://dev.mysql.com/doc/refman/5.6/en/create-table.html
- * CREATE [TEMPORARY] TABLE [IF NOT EXISTS] tbl_name (create_definition,...) [table_options] [partition_options]
+ * @see https://www.postgresql.org/docs/9.5/static/sql-createtable.html
+ * @see http://docs.oracle.com/cd/B28359_01/server.111/b28286/statements_7002.htm#SQLRF01402
  * 
  * @author iMinusMinus
  * @since 2017-01-24
