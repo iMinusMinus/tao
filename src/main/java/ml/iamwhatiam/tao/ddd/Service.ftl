@@ -1,7 +1,7 @@
 <#import "pub.ftl" as software>
 <@software.license />
  
-package ml.iamwhatiam.tao.ddd.${namespace};
+package ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.service</#if>;
  
 import java.util.List;
 
@@ -11,9 +11,11 @@ import org.springframework.stereotype.Service;
 
 import ml.iamwhatiam.tao.ddd.dao.CrudDao;
 import ml.iamwhatiam.tao.ddd.service.CrudService;
+<#if !samePackage>
 import ml.iamwhatiam.tao.ddd.${namespace}.TransformationHelper;
 import ml.iamwhatiam.tao.ddd.${namespace}.domain.${bean.name}Domain;
 import ml.iamwhatiam.tao.ddd.${namespace}.vo.${bean.name}VO;
+<#/if>
 
 
 /**

@@ -1,7 +1,7 @@
 <#import "pub.ftl" as software>
 <@software.license />
 
-package ml.iamwhatiam.tao.ddd.${module}.vo;
+package ml.iamwhatiam.tao.ddd.${module}<#if !samePackage>.vo</#if>;
  
 import java.io.Serializable;
 <#list ${bean.imports} as im>
@@ -16,7 +16,7 @@ ${im};
  * @version 0.0.1
  *
  */
-public class ${bean.name?upper_first}VO implements Seriable {
+public class ${bean.name?upper_first}VO implements Serializable {
  
  	private static final long serialVersionUID = 1L;
  	

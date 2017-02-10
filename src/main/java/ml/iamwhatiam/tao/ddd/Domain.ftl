@@ -1,7 +1,7 @@
 <#import "pub.ftl" as software>
 <@software.license />
 
-package ml.iamwhatiam.tao.ddd.${namespace}.domain;
+package ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.domain</#if>;
  
 import ml.iamwhatiam.tao.domain.Taichi;
 <#list ${bean.imports} as im>

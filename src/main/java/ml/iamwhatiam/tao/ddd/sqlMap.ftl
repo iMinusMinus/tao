@@ -30,7 +30,7 @@
 </#if>
 <${ROOT} namespace="ml.iamwhatiam.tao.ddd.${namespace}.mapper.${bean.name}">
 
-    <typeAlias alias="${bean.name}DO" class="ml.iamwhatiam.tao.ddd.${namespace}.domain.${bean.name?upper_first}Domain" />
+    <typeAlias alias="${bean.name}DO" class="ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.domain</#if>.${bean.name?upper_first}Domain" />
 
 	<resultMap class="${bean.name}DO" id="${bean.name}ResultMap">
 	<#list ${table.columns} as column>

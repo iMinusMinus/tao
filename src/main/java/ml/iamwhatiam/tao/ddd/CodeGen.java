@@ -62,6 +62,7 @@ public final class CodeGen {
 			System.out.println("-n, --namespace              parent package of generated files. use table.schema or table.catalog by default.");
 			System.out.println("-c, --config                 Annotation: 1, XML: 2, SpringMVC: 4, Spring: 8, iBatis: 16, Struts: 32, MyBatis: 64, Hibernate: 128");
 			System.out.println("-m, --mapping                how sql data type mapping to java type. for example: TINYINT=byte;NUMBER=java.math.BigDecimal.");
+			System.out.println("-s, --simple                 VO, DO, Controller, Service, DAO and sqlMap in same package");
 		}
 		else if(args.length < 2) throw new RuntimeException("-d --dialect must be specified!");
 		Dialect dialect = null;
@@ -70,6 +71,7 @@ public final class CodeGen {
 		String tmp = null;
 		String namespace = null;
 		int enabled = 0;
+		boolean same = false;
 		StringBuilder config = new StringBuilder();
 		for(int i = 0, j = args.length; i < j; i += 2) {
 			if("-d".equals(args[i]) || "--dialect".equals(args[i])) {
@@ -93,6 +95,9 @@ public final class CodeGen {
 						config.append(all[power]).append(",");
 					power++;
 				}
+			}
+			else if("-s".equals(args[i]) || "--simple".equals(args[i])) {
+				same = "True".equalsIgnoreCase(args[i + 1]);
 			}
 		}
 		if(tmp != null) {
@@ -125,6 +130,7 @@ public final class CodeGen {
 		root.put("namespace", namespace);
 		root.put("date", new Date());
 		root.put("config", config.toString());
+		root.put("samePackage", same);
 		Configuration cfg = new Configuration(Configuration.VERSION_2_3_22);
         cfg.setClassForTemplateLoading(CodeGen.class, "/ml/iamwhatiam/tao/ddd");
         CodeGen cg = new CodeGen();

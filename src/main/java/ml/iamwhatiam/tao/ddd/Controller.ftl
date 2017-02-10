@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 <#-- no need to import if Controller, Service, DAO and indeed POJOs are in same package -->
-import ml.iamwhatiam.tao.ddd.${namespace}.vo.${bean.name}VO;
+<#if !samePackage>import ml.iamwhatiam.tao.ddd.${namespace}.vo.${bean.name}VO;</#if>
 import ml.iamwhatiam.tao.ddd.service.CrudService;
 
  

@@ -2,10 +2,10 @@
 <@software.license />
 
 package ml.iamwhatiam.tao.ddd.${namespace};
-
+<#if !samePackage>
 import ml.iamwhatiam.tao.ddd.${namespace}.domain.${bean.name}Domain;
 import ml.iamwhatiam.tao.ddd.${namespace}.vo.${bean.name}VO;
-
+</#if>
  
 /**
  * transformation between Domain and VO

@@ -1,7 +1,7 @@
 <#import "pub.ftl" as software>
 <@software.license />
  
-package ml.iamwhatiam.tao.ddd.${namespace}.dao;
+package ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao</#if>;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ import javax.annotation.Resource;
 import org.springframework.orm.ibatis.support.SqlMapClientDaoSupport;
 import org.springframework.stereotype.Repository;
 
-import ml.iamwhatiam.tao.ddd.${namespace}.domain.${bean.name}Domain;
+<#if !samePackage>import ml.iamwhatiam.tao.ddd.${namespace}.domain.${bean.name}Domain;</#if>
 
 
 /**
