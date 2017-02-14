@@ -5,8 +5,12 @@
 <#assign START_TAG = "#">
 <#assign END_TAG = "#">
 <#assign IS_NOT_NULL_START = "<isNotNull property='">
-<#assign IS_NOT_NULL_END = "' />">
+<#assign IS_NOT_NULL_END = "' >">
 <#assign IS_NOT_NULL_END_TAG = "</isNotNull>">
+<#assign IS_NOT_EQUAL_START = "<isNotEqual property='">
+<#assign IS_NOT_EQUAL_STOP = "' compareValue=">
+<#assign IS_NOT_EQUAL_END = " >">
+<#assign IS_NOT_EQUAL_END_TAG = "</isNotEqual>">
 <#assign SET_START_TAG = "<dynamic prepend='SET'>" />
 <#assign SET_END_TAG = "</dynamic>" />
 <#assign WHERE_START_TAG = "<dynamic prepend='WHERE'>" />
@@ -20,6 +24,10 @@
 <#assign IS_NOT_NULL_START = "<if test='">
 <#assign IS_NOT_NULL_END = "!=null' />">
 <#assign IS_NOT_NULL_END_TAG = "</if>">
+<#assign IS_NOT_EQUAL_START = "<if test='">
+<#assign IS_NOT_EQUAL_STOP = "!=">
+<#assign IS_NOT_EQUAL_END = "' >">
+<#assign IS_NOT_EQUAL_END_TAG = "</if>">
 <#assign SET_START_TAG = "<trim prefix='SET' suffixOverrides=','>" /><#-- or use set tag -->
 <#assign SET_END_TAG = "</trim>" />
 <#assign WHERE_START_TAG = "<trim prefix='WHERE' prefixOverrides='AND'> /><#-- or use where tag -->
@@ -47,9 +55,15 @@
 	
 	<sql id="condition">
 	<#list ${table.columns} as column>
+	<#if column.defaultValue??>
+	${IS_NOT_EQUAL_START}<@snake2camel snakeCase=column.name />${IS_NOT_EQUAL_STOP}${column.defaultValue}${IS_NOT_EQUAL_END}
+		AND T.${column.name} = ${START_TAG}<@snake2camel snakeCase=column.name />${END_TAG}
+	${IS_NOT_EQUAL_END_TAG}	
+	<#else>
 	${IS_NOT_NULL_START}<@snake2camel snakeCase=column.name />${IS_NOT_NULL_END}
 	    AND T.${column.name} = ${START_TAG}<@snake2camel snakeCase=column.name />${END_TAG}
 	${IS_NOT_NULL_END_TAG}
+	</#if>
 	</#list>
 	</sql>
 	
