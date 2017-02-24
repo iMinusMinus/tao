@@ -24,13 +24,18 @@
 package ml.iamwhatiam.tao.ddd;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * DBMS table abstract:
@@ -70,6 +75,40 @@ import javax.validation.constraints.Size;
  */
 public class Table {
 	
+	private static Logger log = LoggerFactory.getLogger(Table.class);
+	
+	private static Set<String> keywords;
+	
+	static {
+		keywords = new HashSet<String>();
+		keywords.add("SELECT");
+		keywords.add("DISTINCT");
+		keywords.add("FROM");
+		keywords.add("WHERE");
+		keywords.add("BETWEEN");
+		keywords.add("AND");
+		keywords.add("GROUP");
+		keywords.add("BY");
+		keywords.add("HAVING");
+		keywords.add("ORDER");
+		keywords.add("UNION");
+		keywords.add("ALL");
+		keywords.add("INSERT");
+		keywords.add("INTO");
+		keywords.add("VALUES");
+		keywords.add("UPDATE");
+		keywords.add("SET");
+		keywords.add("DELETE");
+		keywords.add("WITH");
+		keywords.add("AS");
+		keywords.add("NOT");
+		keywords.add("NULL");
+		keywords.add("IS");
+		keywords.add("CASE");
+		keywords.add("WHEN");
+		//XXX not sure miss nor redundant
+	}
+	
 	private final Dialect dialect;
 	
 	public Table (Dialect dialect) {
@@ -102,6 +141,10 @@ public class Table {
 	
 	//ignore partition options
 	
+	private static boolean isKeyword(String name) {
+		return keywords.contains(name);
+	}
+	
 	public Dialect getDialect() {
 		return dialect;
 	}
@@ -128,6 +171,8 @@ public class Table {
 	}
 
 	public void setName(String name) {
+		if(isKeyword(name))
+			log.warn("table name [{}] should better not be sql keywrod", name);
 		this.name = name;
 	}
 
@@ -195,6 +240,8 @@ public class Table {
 	public static class Column {
 		
 		public Column(String name, DataType dataType) {
+			if(isKeyword(name))
+				log.warn("column name [{}] should better not be sql keywrod", name);
 			this.name = name;
 			this.dataType = dataType;
 		}
@@ -238,6 +285,8 @@ public class Table {
 		}
 
 		public void setName(String name) {
+			if(isKeyword(name))
+				log.warn("column name [{}] should better not be sql keywrod", name);
 			this.name = name;
 		}
 
@@ -262,6 +311,12 @@ public class Table {
 		}
 
 		public void setDefaultValue(String defaultValue) {
+			if(dataType == CharacterDataType.CHARACTER || dataType == CharacterDataType.CHARACTER_VARYING
+					|| dataType == MySQLDataType.CHAR || dataType == MySQLDataType.VARCHAR || dataType == MySQLDataType.TINYTEXT 
+					|| dataType == MySQLDataType.MEDIUMTEXT || dataType == MySQLDataType.TEXT || dataType == MySQLDataType.LONGTEXT
+					|| dataType == PostgresDataType.CHARACTER || dataType == PostgresDataType.CHARACTER_VARING || dataType == PostgresDataType.TEXT
+					|| dataType == OracleDataType.CHAR || dataType == OracleDataType.VARCHAR2 || dataType == OracleDataType.CLOB)
+				defaultValue = "'" + defaultValue + "'";
 			this.defaultValue = defaultValue;
 		}
 
@@ -989,6 +1044,10 @@ public class Table {
 					init = true;
 				}
 				
+				public boolean isUnsigned() {
+					return unsigned;
+				}
+				
 				@Override public String toSQL() {
 					StringBuilder sb = new StringBuilder(super.toSQL());
 					if(init)
@@ -1018,6 +1077,10 @@ public class Table {
 					this.unsigned = unsigned;
 					this.zerofill = zerofill;
 					init = true;
+				}
+				
+				public boolean isUnsigned() {
+					return unsigned;
 				}
 				
 				@Override public String toSQL() {
@@ -1056,6 +1119,10 @@ public class Table {
 					init = true;
 				}
 				
+				public boolean isUnsigned() {
+					return unsigned;
+				}
+				
 				@Override public String toSQL() {
 					StringBuilder sb = new StringBuilder(super.toSQL());
 					if(init)
@@ -1092,6 +1159,10 @@ public class Table {
 					init = true;
 				}
 				
+				public boolean isUnsigned() {
+					return unsigned;
+				}
+				
 				@Override public String toSQL() {
 					StringBuilder sb = new StringBuilder(super.toSQL());
 					if(init)
@@ -1103,7 +1174,7 @@ public class Table {
 					return sb.toString();
 				}
 			},
-			BIGINT {//
+			BIGINT {
 
 				private int m = 8;
 				
@@ -1126,6 +1197,10 @@ public class Table {
 					this.unsigned = unsigned;
 					this.zerofill = zerofill;
 					init = true;
+				}
+				
+				public boolean isUnsigned() {
+					return unsigned;
 				}
 				
 				@Override public String toSQL() {
@@ -1178,6 +1253,10 @@ public class Table {
 					init = true;
 				}
 				
+				public boolean isUnsigned() {
+					return unsigned;
+				}
+				
 				@Override public String toSQL() {
 					StringBuilder sb = new StringBuilder(super.toSQL());
 					if(init)
@@ -1226,6 +1305,10 @@ public class Table {
 					this.zerofill = zerofill;
 				}
 				
+				public boolean isUnsigned() {
+					return unsigned;
+				}
+				
 				@Override public String toSQL() {
 					StringBuilder sb = new StringBuilder(super.toSQL());
 					if(m > 0)
@@ -1269,6 +1352,10 @@ public class Table {
 					d = scale;
 					this.unsigned = unsigned;
 					this.zerofill = zerofill;
+				}
+				
+				public boolean isUnsigned() {
+					return unsigned;
 				}
 				
 				@Override public String toSQL() {
@@ -1583,6 +1670,10 @@ public class Table {
 			public void set(int precision, int intervalClass, int fracionalPrecision) {
 				throw new UnsupportedOperationException();
 			}
+			
+			public boolean isUnsigned() {
+				throw new AbstractMethodError();
+			}
 
 			public String[] names() {
 				throw new AbstractMethodError();
@@ -1784,7 +1875,7 @@ public class Table {
 					if(fraction > 0)
 						sb.append("(").append(fraction).append(")");
 					if(withTimeZone)
-						sb.append(" WITH TIME ZONE");//XXX ignored TIMESTAMP WITH LOCAL TIME ZONE
+						sb.append(" WITH TIME ZONE");//ignored TIMESTAMP WITH LOCAL TIME ZONE
 					return sb.toString();
 				}
 			},
@@ -2322,6 +2413,8 @@ public class Table {
 		}
 		
 		public Constraint(String name, Column... columns) {
+			if(isKeyword(name))
+				log.warn("constraint name [{}] should better not be sql keywrod", name);
 			this.name = name;
 			this.columns = columns;
 		}
@@ -2413,6 +2506,8 @@ public class Table {
 //		private Action onDelete = Action.RESTRICT;
 		
 		public ForeignKey(String name, Column[] self, Column[] reference) {
+			if(isKeyword(name))
+				log.warn("foreign key name [{}] should better not be sql keywrod", name);
 			this.name = name;
 			assert self.length == reference.length;
 			this.columns = self;

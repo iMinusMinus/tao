@@ -26,10 +26,14 @@ package ml.iamwhatiam.tao.ddd;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * meta java bean
@@ -43,6 +47,64 @@ public class JavaBean implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	
+	private Logger log = LoggerFactory.getLogger(JavaBean.class);
+	
+	private static Set<String> keywords;
+	
+	static {
+		keywords = new HashSet<String>();
+        keywords.add("package");
+        keywords.add("class");
+        keywords.add("interface");
+        keywords.add("import");
+        keywords.add("extend");
+        keywords.add("implements");
+        keywords.add("public");
+        keywords.add("protected");
+        keywords.add("private");
+        keywords.add("abstract");
+        keywords.add("native");
+        keywords.add("static");
+        keywords.add("final");
+        keywords.add("transient");
+        keywords.add("volatile");
+        keywords.add("boolean");
+        keywords.add("byte");
+        keywords.add("char");
+        keywords.add("short");
+        keywords.add("int");
+        keywords.add("long");
+        keywords.add("float");
+        keywords.add("double");
+        keywords.add("void");
+        keywords.add("return");
+        keywords.add("if");
+        keywords.add("else");
+        keywords.add("for");
+        keywords.add("do");
+        keywords.add("while");
+        keywords.add("switch");
+        keywords.add("case");
+        keywords.add("default");
+        keywords.add("continue");
+        keywords.add("break");
+        keywords.add("goto");
+        keywords.add("try");
+        keywords.add("catch");
+        keywords.add("finally");
+        keywords.add("throw");
+        keywords.add("throws");
+        keywords.add("new");
+        keywords.add("instanceof");
+        keywords.add("synchronized");
+        keywords.add("super");
+        keywords.add("this");
+        keywords.add("strictfp");
+        keywords.add("enum");
+        keywords.add("const");
+        keywords.add("assert");
+	}
+	
 	private String name;
 	
 	private String comment;
@@ -54,7 +116,11 @@ public class JavaBean implements Serializable {
 	private Set<String> imports = new TreeSet<String>();
 	
 	public JavaBean(String name) {
-		this.name = name;
+		if(keywords.contains(name)) {
+			log.error("field name must not be java keyword: [{}]", name);
+			throw new IllegalArgumentException("field name must not be java keyword");
+		}
+		else this.name = name;
 	}
 	
 	public String getName() {
@@ -62,7 +128,11 @@ public class JavaBean implements Serializable {
 	}
 
 	public void setName(String name) {
-		this.name = name;
+		if(keywords.contains(name)) {
+			log.error("field name must not be java keyword: [{}]", name);
+			throw new IllegalArgumentException("field name must not be java keyword");
+		}
+		else this.name = name;
 	}
 
 	public String getComment() {
@@ -103,7 +173,11 @@ public class JavaBean implements Serializable {
 		private List<Constraint> constraints;
 		
 		public Property(String name, Class<?> javaType) {
-			this.name = name;
+			if(keywords.contains(name)) {
+				log.error("field name must not be java keyword: [{}]", name);
+				throw new IllegalArgumentException("field name must not be java keyword");
+			}
+			else this.name = name;
 			this.type = javaType.getSimpleName();
 			if(!javaType.isPrimitive() && !javaType.getName().startsWith("java.lang."))
 				imports.add(javaType.getName());
@@ -114,7 +188,11 @@ public class JavaBean implements Serializable {
 		}
 
 		public void setName(String name) {
-			this.name = name;
+			if(keywords.contains(name)) {
+				log.error("field name must not be java keyword: [{}]", name);
+				throw new IllegalArgumentException("field name must not be java keyword");
+			}
+			else this.name = name;
 		}
 
 		public String getType() {
