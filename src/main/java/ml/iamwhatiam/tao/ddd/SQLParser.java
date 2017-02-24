@@ -23,7 +23,16 @@
  */
 package ml.iamwhatiam.tao.ddd;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SQL parser:
@@ -40,6 +49,16 @@ import java.io.InputStream;
  */
 public class SQLParser {
 	
+	private Logger log = LoggerFactory.getLogger(SQLParser.class);
+	
+	private static Set<String> keywords;
+	
+	static {
+		keywords = new LinkedHashSet<String>();
+		keywords.add("CREATE");
+		keywords.add("TABLE");
+	}
+	
 	private Dialect dialect;
 	
 	public SQLParser(Dialect dialect) {
@@ -52,8 +71,64 @@ public class SQLParser {
 	
 	public Table parse(InputStream is, String charset) {
 		Table table = new Table(dialect);
+		BufferedReader br = null;
+		StringBuilder sb = new StringBuilder();
+		boolean ignore = false;
+		boolean literal = false;
+		boolean special = false;
+		try {
+			br = new BufferedReader(new InputStreamReader(is, charset));
+
+
+		} catch (UnsupportedEncodingException e) {
+			log.warn(e.getMessage(), e);
+		} 
 		//TODO
 		return table;
+	}
+	
+	protected String parseTableName() {
+		return null;
+	}
+	
+	protected Table.Column parseColumn() {
+		return null;
+	}
+	
+	protected String parseColumnName() {
+		return null;
+	}
+	
+	protected Table.Column.DataType parseColumnDataType() {
+		return null;
+	}
+	
+	protected Table.PrimaryKey parsePrimaryKey() {
+		return null;
+	}
+	
+	protected Table.UniqueKey parseUniqueKey() {
+		return null;
+	}
+	
+	protected Table.ForeignKey parseForeignKey() {
+		return null;
+	}
+	
+	protected Table.Index parseIndex() {
+		return null;
+	}
+	
+	protected Table.Check parseCheck() {
+		return null;
+	}
+	
+	protected String parseTableComment() {
+		return null;
+	}
+	
+	protected String parseColumnComment() {
+		return null;
 	}
 
 }

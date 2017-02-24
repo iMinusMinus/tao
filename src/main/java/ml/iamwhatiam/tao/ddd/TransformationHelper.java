@@ -203,11 +203,17 @@ public class TransformationHelper {
 	private static Class<?> dataType2javaType(Table.Column.MySQLDataType dataType) {
 		Class<?> javaType = null;
 		switch(dataType) {
-		case TINYINT: javaType = Byte.TYPE; break;
-		case SMALLINT: javaType = Short.TYPE; break;
+		case TINYINT://maybe boolean
+		case SMALLINT: javaType = Integer.TYPE; break;
 		case MEDIUMINT:
-		case INT: javaType = Integer.TYPE; break;
-		case BIGINT: javaType = Long.TYPE; break;
+		case INT: 
+			if(dataType.isUnsigned())
+				javaType = Long.TYPE;
+			else javaType = Integer.TYPE; break;
+		case BIGINT:
+			if(dataType.isUnsigned())
+				javaType = BigInteger.class;
+			else javaType = Long.TYPE; break;
 		case DECIMAL:
 			if(dataType.getPrecision() < 10 && dataType.getScale() == 0) javaType = Integer.TYPE;
 			else if(dataType.getPrecision() < 19 && dataType.getScale() == 0) javaType = Long.TYPE;
@@ -218,8 +224,7 @@ public class TransformationHelper {
 		case DOUBLE: javaType = Double.TYPE; break;
 		case BIT: 
 			if(dataType.get() == 1) javaType = Boolean.TYPE; 
-			else if(dataType.get() < 32) javaType = Integer.TYPE;
-			else javaType = Long.TYPE;
+			else javaType = byte[].class;
 			break;
 		case DATE:
 		case DATETIME:
@@ -247,7 +252,7 @@ public class TransformationHelper {
 		case MULTIPOINT:
 		case MULTILINESTRING:
 		case MULTIPOLYGON:
-		case GEOMETRYCOLLECTION: javaType = String.class; break;//maybe user defined java bean
+		case GEOMETRYCOLLECTION: javaType = String.class; break;//user defined java bean!
 		default:
 		}
 		return javaType;
@@ -340,6 +345,17 @@ public class TransformationHelper {
 		default:	
 		}
 		return javaType;
+	}
+	
+	public static ViewModel bean2form(JavaBean bean) {
+		ViewModel form = new ViewModel();
+		//TODO
+		return form;
+	}
+	
+	private static ViewModel.Input.Type javaType2inputType(Class<?> klazz) {
+		//TODO
+		return null;
 	}
 	
 }

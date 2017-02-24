@@ -51,7 +51,7 @@ public final class CodeGen {
 	
 	public CodeGen() {
 		policy = GeneratePolicy.SOURCE;
-		tpls = new String[] {"Controller.ftl", "Service.ftl", "DAO.ftl", "VO.ftl", "Domain.ftl", "sqlMap.ftl"};
+		tpls = new String[] {"Controller.ftl", "Service.ftl", "DAO.ftl", "VO.ftl", "Domain.ftl", "sqlMap.ftl", "TransformationHelper.ftl"};
 	}
 	
 	public static void main(String[] args) {
@@ -62,7 +62,7 @@ public final class CodeGen {
 			System.out.println("-n, --namespace              parent package of generated files. use table.schema or table.catalog by default.");
 			System.out.println("-c, --config                 Annotation: 1, XML: 2, SpringMVC: 4, Spring: 8, iBatis: 16, Struts: 32, MyBatis: 64, Hibernate: 128");
 			System.out.println("-m, --mapping                how sql data type mapping to java type. for example: TINYINT=byte;NUMBER=java.math.BigDecimal.");
-			System.out.println("-s, --simple                 VO, DO, Controller, Service, DAO and sqlMap in same package");
+			System.out.println("-s, --simple                 1: no VO only DO, 2: no Controller, 4: no Service, 8: VO, DO, Controller, Service, DAO and sqlMap in same package");
 		}
 		else if(args.length < 2) throw new RuntimeException("-d --dialect must be specified!");
 		Dialect dialect = null;
@@ -71,7 +71,7 @@ public final class CodeGen {
 		String tmp = null;
 		String namespace = null;
 		int enabled = 0;
-		boolean same = false;
+		int simplify = 0;
 		StringBuilder config = new StringBuilder();
 		for(int i = 0, j = args.length; i < j; i += 2) {
 			if("-d".equals(args[i]) || "--dialect".equals(args[i])) {
@@ -97,7 +97,7 @@ public final class CodeGen {
 				}
 			}
 			else if("-s".equals(args[i]) || "--simple".equals(args[i])) {
-				same = "True".equalsIgnoreCase(args[i + 1]);
+				simplify = Integer.parseInt(args[i + 1]);
 			}
 		}
 		if(tmp != null) {
@@ -131,15 +131,21 @@ public final class CodeGen {
 		root.put("namespace", namespace);
 		root.put("date", new Date());
 		root.put("config", config.toString());
-		root.put("samePackage", same);
+		root.put("samePackage", (simplify & 8) != 0);
 		Configuration cfg = new Configuration(Configuration.VERSION_2_3_22);
         cfg.setClassForTemplateLoading(CodeGen.class, "/ml/iamwhatiam/tao/ddd");
         CodeGen cg = new CodeGen();
         for(String tpl : cg.tpls) {
         	Writer out = null;
         	String name = null;
-//        	if(mvc != "SpringMVC" && tpl == "Controller.ftl") continue;//Struts2 and so on
-//        	if(dao != "iBatis" && tpl == "sqlMap.ftl" || tpl == "DAO.ftl") continue;//Hibernate and so on
+        	if((simplify & 1) != 0 && (tpl.equals("VO.ftl") || tpl.equals("TransformationHelper.ftl")))
+        		continue;
+        	if((simplify & 2) != 0 && (tpl.equals("Controller.ftl") || tpl.equals("JSP.ftl")))
+        		continue;
+        	if((simplify & 4) != 0 && tpl.equals("Service.ftl"))
+        		continue;
+        	if(config.indexOf("SpringMVC") == 0 && tpl.equals("Controller.ftl")) continue;//Struts2 and so on
+        	if(config.indexOf("iBatis") == 0 && (tpl.equals("sqlMap.ftl") || tpl.equals("DAO.ftl"))) continue;//Hibernate and so on
         	try {
         		switch(cg.policy) {
         		case SOURCE: 
