@@ -38,7 +38,7 @@ import ml.iamwhatiam.tao.constraints.Enumeration;
  */
 public class EnumerationValidator implements ConstraintValidator<Enumeration, String> {
 	
-	private Class enumType;
+	private Class<? extends Enum<?>> enumType;
 
 	@Override
 	public void initialize(Enumeration annotation) {
@@ -47,10 +47,9 @@ public class EnumerationValidator implements ConstraintValidator<Enumeration, St
 
 	@Override
 	public boolean isValid(String obj, ConstraintValidatorContext context) {
-		try {
-			Enum.valueOf(enumType, obj);
-			return true;
-		} catch (Exception e) {
+		for(Enum<?> constant : enumType.getEnumConstants()) {
+			if(constant.name().equals(obj))
+				return true;
 		}
 		return false;
 	}
