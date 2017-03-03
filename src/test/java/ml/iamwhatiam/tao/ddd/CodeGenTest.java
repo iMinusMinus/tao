@@ -26,6 +26,7 @@ package ml.iamwhatiam.tao.ddd;
 import java.io.StringWriter;
 import java.io.Writer;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import freemarker.template.Configuration;
@@ -48,9 +49,19 @@ public class CodeGenTest {
 			Template tpl = cfg.getTemplate("test.ftl");
 			Writer writer = new StringWriter();
 			tpl.process(null, writer);
-			System.out.println(writer.toString());
+			String handled = writer.toString();
+			System.out.println(handled);
+			Assert.assertTrue(handled.contains("scalarValue"));
+			Assert.assertFalse(handled.contains("some_value_to_test"));
 		} catch (Exception e) {
+			Assert.fail();
 		}
+	}
+	
+	@Test
+	public void testCodeGen() {
+		String[] args =  {"-d", "MySQL", "-n", "test", "-t", "src/main/java/ml/iamwhatiam/tao/ddd", "src/test/resources/tables.sql"};
+		CodeGen.main(args);
 	}
 
 }

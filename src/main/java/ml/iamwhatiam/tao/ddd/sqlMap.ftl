@@ -1,7 +1,10 @@
+<#import "pub.ftl" as tool>
 <?xml version="1.0" encoding="UTF-8"?>
 <#-- condition definition -->
 <#if config?contains("iBatis")>
 <#assign ROOT = "sqlMap">
+<#assign TYPE = "class">
+<#assign PARAMETER_TYPE = "parameterClass">
 <#assign START_TAG = "#">
 <#assign END_TAG = "#">
 <#assign IS_NOT_NULL_START = "<isNotNull property='">
@@ -11,103 +14,128 @@
 <#assign IS_NOT_EQUAL_STOP = "' compareValue=">
 <#assign IS_NOT_EQUAL_END = " >">
 <#assign IS_NOT_EQUAL_END_TAG = "</isNotEqual>">
-<#assign SET_START_TAG = "<dynamic prepend='SET'>" />
-<#assign SET_END_TAG = "</dynamic>" />
-<#assign WHERE_START_TAG = "<dynamic prepend='WHERE'>" />
-<#assign WHERE_END_TAG = "</dynamic>" />
+<#assign SET_START_TAG = "<dynamic prepend='SET'>">
+<#assign SET_END_TAG = "</dynamic>">
+<#assign WHERE_START_TAG = "<dynamic prepend='WHERE'>">
+<#assign WHERE_END_TAG = "</dynamic>">
 <#t>
 <!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
 <#else>
 <#assign ROOT = "mapper">
+<#assign TYPE = "type">
+<#assign PARAMETER_TYPE = "parameterType"><#-- parameterMap is deprecated -->
 <#assign START_TAG = "#{">
 <#assign END_TAG = "}">
-<#assign IS_NOT_NULL_START = "<if test='">
-<#assign IS_NOT_NULL_END = "!=null' />">
+<#assign IS_NOT_NULL_START = "<if test= '">
+<#assign IS_NOT_NULL_END = " != null'>">
 <#assign IS_NOT_NULL_END_TAG = "</if>">
-<#assign IS_NOT_EQUAL_START = "<if test='">
-<#assign IS_NOT_EQUAL_STOP = "!=">
+<#assign IS_NOT_EQUAL_START = "<if test= '">
+<#assign IS_NOT_EQUAL_STOP = " != ">
 <#assign IS_NOT_EQUAL_END = "' >">
 <#assign IS_NOT_EQUAL_END_TAG = "</if>">
 <#assign SET_START_TAG = "<trim prefix='SET' suffixOverrides=','>" /><#-- or use set tag -->
-<#assign SET_END_TAG = "</trim>" />
-<#assign WHERE_START_TAG = "<trim prefix='WHERE' prefixOverrides='AND'> /><#-- or use where tag -->
-<#assign WHERE_END_TAG = "</trim>" />
+<#assign SET_END_TAG = "</trim>">
+<#assign WHERE_START_TAG = "<trim prefix='WHERE' prefixOverrides='AND'>"><#-- or use where tag -->
+<#assign WHERE_END_TAG = "</trim>">
 <#-- foreach, trim, bind, choose when otherwise -->
 <#t>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 </#if>
 <${ROOT} namespace="ml.iamwhatiam.tao.ddd.${namespace}.mapper.${bean.name}">
 
-    <typeAlias alias="${bean.name}DO" class="ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.domain</#if>.${bean.name?upper_first}Domain" />
-
-	<resultMap class="${bean.name}DO" id="${bean.name}ResultMap">
-	<#list ${table.columns} as column>
-		<result column="${column.name}" property="<@snake2camel snakeCase=column.name />" javaType="${}" /><!-- jdbcType=${column.dataType} -->
+	<#if config?contains("iBatis")>
+    <typeAlias alias="${bean.name}DO" type="ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.domain</#if>.${bean.name?cap_first}Domain" />
+	<#else>
+	<#-- parameterMap is deprecated -->
+	<parameterMap id="${bean.name}DO" type="ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.domain</#if>.${bean.name?cap_first}Domain" />
+	</#if>
+	
+	<resultMap ${TYPE}="${bean.name}DO" id="${bean.name}ResultMap">
+	<#list table.columns as column>
+		<#list bean.properties as property>
+		<#if property.name?upper_case == column.name?replace('_', '')?upper_case>
+		<result column="${column.name}" property="${property.name}" javaType="${property.javaType}" /><!-- jdbcType=${column.dataType} -->
+		</#if>
+		</#list>
 	</#list>
 	</resultMap>
 	
 	
 	<sql id="columns">
-		<#list ${table.columns} as column >
-		column.name<#seq>,
+		<#list table.columns as column >
+		${column.name}<#sep>,
 		</#list>
 	</sql>
 	
 	<sql id="condition">
-	<#list ${table.columns} as column>
-	<#if column.defaultValue??>
-	${IS_NOT_EQUAL_START}<@snake2camel snakeCase=column.name />${IS_NOT_EQUAL_STOP}${column.defaultValue}${IS_NOT_EQUAL_END}
-		AND T.${column.name} = ${START_TAG}<@snake2camel snakeCase=column.name />${END_TAG}
+	<#list table.columns as column>
+	<#if column.defaultValue?? && column.defaultValue != "''">
+	${IS_NOT_EQUAL_START}<@tool.snake2camel snakeCase="${column.name}" />${IS_NOT_EQUAL_STOP}${column.defaultValue}${IS_NOT_EQUAL_END}
+		AND T.${column.name} = ${START_TAG}<@tool.snake2camel snakeCase="${column.name}" />${END_TAG}
 	${IS_NOT_EQUAL_END_TAG}	
 	<#else>
-	${IS_NOT_NULL_START}<@snake2camel snakeCase=column.name />${IS_NOT_NULL_END}
-	    AND T.${column.name} = ${START_TAG}<@snake2camel snakeCase=column.name />${END_TAG}
+	${IS_NOT_NULL_START}<@tool.snake2camel snakeCase="${column.name}" />${IS_NOT_NULL_END}
+	    AND T.${column.name} = ${START_TAG}<@tool.snake2camel snakeCase="${column.name}" />${END_TAG}
 	${IS_NOT_NULL_END_TAG}
 	</#if>
 	</#list>
 	</sql>
 	
 	
-	<insert id="insert" parameterClass="${bean.name}DO">
+	<insert id="insert" ${PARAMETER_TYPE}="${bean.name}DO">
 	INSERT INTO ${table.name} 
 	(
 	<include refid="columns" />
 	) 
 	VALUES 
 	(
-	<#list table.columns as column>${START_TAG}<@snake2camel snakeCase=column.name />${END_TAG}<#sep>,</#list>
+	<#list table.columns as column>
+	${START_TAG}<@tool.snake2camel snakeCase=column.name />${END_TAG}<#sep>,
+	</#list>
 	)
 	</insert>
-	<insert id="insertSelective" parameterClass="${bean.name}DO">
+	<insert id="insertSelective" ${PARAMETER_TYPE}="${bean.name}DO">
 	INSERT INTO ${table.name} 
 	(
 		<#list table.columns as column>
-		<isNotNull prepend="," property="<@snake2camel snakeCase=column.name />">
-	${column.name}	
-		</isNotNull>
+	<#if column.defaultValue?? && column.defaultValue != "''">
+	${IS_NOT_EQUAL_START}<@tool.snake2camel snakeCase="${column.name}" />${IS_NOT_EQUAL_STOP}${column.defaultValue}${IS_NOT_EQUAL_END}
+		${START_TAG}<@tool.snake2camel snakeCase="${column.name}" />${END_TAG}<#sep>,</#sep>
+	${IS_NOT_EQUAL_END_TAG}	
+	<#else>
+	${IS_NOT_NULL_START}<@tool.snake2camel snakeCase="${column.name}" />${IS_NOT_NULL_END}
+	    ${START_TAG}<@tool.snake2camel snakeCase="${column.name}" />${END_TAG}<#sep>,</#sep>
+	${IS_NOT_NULL_END_TAG}
+	</#if>
 		</#list>	
 	)
 	VALUES 
 	(
 		<#list table.columns as column>
-		<isNotNull prepend="," property="<@snake2camel snakeCase=column.name />">
-	${START_TAG}<@snake2camel snakeCase=column.name />${END_TAG}
-		</isNotNull>
+			<#if column.defaultValue?? && column.defaultValue != "''">
+	${IS_NOT_EQUAL_START}<@tool.snake2camel snakeCase="${column.name}" />${IS_NOT_EQUAL_STOP}${column.defaultValue}${IS_NOT_EQUAL_END}
+		${START_TAG}<@tool.snake2camel snakeCase="${column.name}" />${END_TAG}<#sep>,</#sep>
+	${IS_NOT_EQUAL_END_TAG}	
+			<#else>
+	${IS_NOT_NULL_START}<@tool.snake2camel snakeCase="${column.name}" />${IS_NOT_NULL_END}
+	   ${START_TAG}<@tool.snake2camel snakeCase="${column.name}" />${END_TAG}<#sep>,</#sep>
+	${IS_NOT_NULL_END_TAG}
+			</#if>
 		</#list>	
 	)
 	</insert>
 	
-	<select id="findById" parameterClass="long" resultMap="${bean.name}ResultMap">
+	<select id="findById" ${PARAMETER_TYPE}="long" resultMap="${bean.name}ResultMap">
 	SELECT <include refid="columns" /> FROM ${table.name} T WHERE T.ID = ${START_TAG}id${END_TAG}
 	</select>
-	<select id="findSelective" parameterClass="${bean.name}DO" resultMap="${bean.name}ResultMap">
+	<select id="findSelective" ${PARAMETER_TYPE}="${bean.name}DO" resultMap="${bean.name}ResultMap">
 	SELECT <include refid="columns" /> 
 	  FROM ${table.name} T 
 		${WHERE_START_TAG}
 		<include refid="condition" />		
 		${WHERE_END_TAG}
 	</select>
-	<select id="count" parameterMap="${bean.name}ResultMap" resultMap="long">
+	<select id="count" ${PARAMETER_TYPE}="${bean.name}ResultMap" resultMap="long">
 	SELECT COUNT(1) 
 	  FROM ${table.name} T 
 	${WHERE_START_TAG}
@@ -115,35 +143,35 @@
 	${WHERE_END_TAG}
 	</select>
 	
-	<update id="updateById" parameterClass="${bean.name}DO" resultMap="${bean.name}ResultMap">
+	<update id="updateById" ${PARAMETER_TYPE}="${bean.name}DO">
 	UPDATE ${table.name}
 		${SET_START_TAG}
-			<#list ${table.columns} as column>
-			${IS_NOT_NULL_START}<@snake2camel snakeCase=column.name />"${IS_NOT_NULL_END}
-			    T.${column.name} = ${START_TAG}<@snake2camel snakeCase=column.name />${END_TAG},
+			<#list table.columns as column>
+			${IS_NOT_NULL_START}<@tool.snake2camel snakeCase=column.name />"${IS_NOT_NULL_END}
+		   T.${column.name} = ${START_TAG}<@tool.snake2camel snakeCase=column.name />${END_TAG},
 			${IS_NOT_NULL_END_TAG}
 			</#list>
-		${SET_START_TAG}
+		${SET_END_TAG}
 	 WHERE ID = ${START_TAG}id${END_TAG}
 	</update>
-	<#--
-	<update id="updateSelective" parameterClass="${bean.name}DO" resultMap="${bean.name}ResultMap">
+	<#---->
+	<update id="updateSelective" ${PARAMETER_TYPE}="${bean.name}DO">
 	UPDATE ${table.name}
 		${SET_START_TAG}
-			<#list ${table.columns} as column>
-			${IS_NOT_NULL_START}<@snake2camel snakeCase=column.name />"${IS_NOT_NULL_END}
-			    T.${column.name} = ${START_TAG}<@snake2camel snakeCase=column.name />${END_TAG},
+			<#list table.columns as column>
+			${IS_NOT_NULL_START}<@tool.snake2camel snakeCase=column.name />"${IS_NOT_NULL_END}
+		   T.${column.name} = ${START_TAG}<@tool.snake2camel snakeCase=column.name />${END_TAG},
 			${IS_NOT_NULL_END_TAG}
 			</#list>
-		${SET_START_TAG}
+		${SET_END_TAG}
 	 WHERE	
 	 	${WHERE_START_TAG}
 			<include refid="condition" />
-		${WHERE_START_TAG}
+		${WHERE_END_TAG}
 	</update>
-	-->
 	
-	<delete id="deleteById" parameterClass="long">
+	
+	<delete id="deleteById" ${PARAMETER_TYPE}="long">
 	DELETE FROM ${table.name} WHERE ID = ${START_TAG}id${END_TAG}
 	</delete>
 </${ROOT}>

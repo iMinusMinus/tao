@@ -105,7 +105,7 @@ public class SQLParserTest {
 		sb.append("(").append("\n");
 		sb.append("    enumtypid oid NOT NULL,").append("\n");
 		sb.append("    enumsortorder real NOT NULL,").append("\n");
-		sb.append("    enumlabel text NOT NULL").append("\n");//origin data type [name]
+		sb.append("    enumlabel text COLLATE pg_catalog.\"default\" NOT NULL").append("\n");//origin data type [name]
 		sb.append(")").append("\n");
 		sb.append("WITH (").append("\n");
 		sb.append("    OIDS = TRUE").append("\n");

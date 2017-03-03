@@ -33,6 +33,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import freemarker.template.Configuration;
 
 /**
@@ -44,6 +47,8 @@ import freemarker.template.Configuration;
  *
  */
 public final class CodeGen {
+	
+	private static Logger log = LoggerFactory.getLogger(CodeGen.class);
 	
 	private GeneratePolicy policy;
 	
@@ -64,9 +69,9 @@ public final class CodeGen {
 			System.out.println("-m, --mapping                how sql data type mapping to java type. for example: TINYINT=byte;NUMBER=java.math.BigDecimal.");
 			System.out.println("-s, --simple                 1: no VO only DO, 2: no Controller, 4: no Service, 8: VO, DO, Controller, Service, DAO and sqlMap in same package");
 		}
-		else if(args.length < 2) throw new RuntimeException("-d --dialect must be specified!");
+		else if(args.length < 5) throw new RuntimeException("-d --dialect must be specified!");
 		Dialect dialect = null;
-		String target = null;
+		String target = null;//like src/main/java/ml/iamwhatiam/tao/ddd
 		Map<String, String> mapping = null;
 		String tmp = null;
 		String namespace = null;
@@ -75,7 +80,7 @@ public final class CodeGen {
 		StringBuilder config = new StringBuilder();
 		for(int i = 0, j = args.length; i < j; i += 2) {
 			if("-d".equals(args[i]) || "--dialect".equals(args[i])) {
-				dialect = Dialect.valueOf(args[i + 1]);
+				dialect = Dialect.valueOf(args[i + 1].toUpperCase());
 			}
 			else if("-t".equals(args[i]) || "--target".equals(args[i])) {
 				target = args[i + 1];
@@ -122,9 +127,14 @@ public final class CodeGen {
 		Table table = parser.parse(fis);
 		if(namespace == null)
 			namespace = table.getCatalog() == null ? table.getSchema() : table.getCatalog();
+		if(namespace == null) {
+			log.warn("use radon namespace while namespace not find");
+			namespace = Long.toHexString(System.currentTimeMillis());
+		}
 		if(dialect != Dialect.POSTGRES)
 			namespace = namespace.toLowerCase();
 		namespace = TransformationHelper.snake2camel(namespace);
+		target = target + File.separator + namespace + File.separator;
 		JavaBean bean = TransformationHelper.table2bean(table);
 		root.put("table", table);
 		root.put("bean", bean);
@@ -149,8 +159,15 @@ public final class CodeGen {
         	try {
         		switch(cg.policy) {
         		case SOURCE: 
-	        		name = tpl.substring(0, tpl.indexOf(".") + 1) + "java";
-	        		out = new FileWriter(new File(target + File.separator + name));
+        			String old = tpl.substring(0, tpl.indexOf(".") + 1);
+        			if("sqlMap.".equals(old))
+        				name = old + ".xml";
+        			else name = old + "java";//XxxPattern or Pattern?
+	        		File file = new File(target + name);//FIXME when Controller, Service etc. not in same package
+	        		if(!file.getParentFile().exists())
+	        			file.getParentFile().mkdirs();
+	        		file.createNewFile();
+	        		out = new FileWriter(file);
 	        		break;
         		case CLASS:
         		case RUNTIME: 	

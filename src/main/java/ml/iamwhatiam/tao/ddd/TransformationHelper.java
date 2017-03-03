@@ -98,12 +98,13 @@ public class TransformationHelper {
 			name = name.toLowerCase();
 		JavaBean bean = new JavaBean(snake2camel(name));
 		Map<String, List<JavaBean.Constraint>> constraints = new HashMap<String, List<JavaBean.Constraint>>();
-		for(Table.Check check : table.getChecks()) {
-			Map<String, JavaBean.Constraint> constraint = check2constraint(bean, check);
-			if(constraint != null) {
-				
+		if(table.getChecks() != null)
+			for(Table.Check check : table.getChecks()) {
+				Map<String, JavaBean.Constraint> constraint = check2constraint(bean, check);
+				if(constraint != null) {
+					
+				}
 			}
-		}
 		for(Table.Column column : table.getColumns()) {
 			JavaBean.Property property = column2property(bean, column);
 			if(constraints.get(column.getName()) != null)
@@ -190,7 +191,15 @@ public class TransformationHelper {
 	public static Class<?> dataType2javaType(Table.Column.DataType dataType) {
 		if(mapping != null && mapping.get() != null && mapping.get().get(dataType) != null)
 			return mapping.get().get(dataType);
-		else return dataType2javaType(dataType);
+		if(dataType instanceof Table.Column.MySQLDataType)
+			return dataType2javaType((Table.Column.MySQLDataType) dataType);
+		else if(dataType instanceof Table.Column.PostgresDataType)
+			return dataType2javaType((Table.Column.PostgresDataType) dataType);
+		else if(dataType instanceof Table.Column.OracleDataType)
+			return dataType2javaType((Table.Column.OracleDataType) dataType);
+		else {
+			throw new NotImplementedException("no data type to java type converter defined!");//TODO
+		}
 	}
 	
 	/**
@@ -199,7 +208,6 @@ public class TransformationHelper {
 	 * @param dataType MySql data type
 	 * @return java type
 	 */
-	@SuppressWarnings("unused")
 	private static Class<?> dataType2javaType(Table.Column.MySQLDataType dataType) {
 		Class<?> javaType = null;
 		switch(dataType) {
@@ -264,7 +272,6 @@ public class TransformationHelper {
 	 * @param dataType MySql data type
 	 * @return java type
 	 */
-	@SuppressWarnings("unused")
 	private static Class<?> dataType2javaType(Table.Column.PostgresDataType dataType) {
 		Class<?> javaType = null;
 		switch(dataType) {
@@ -319,7 +326,6 @@ public class TransformationHelper {
 	 * @param dataType MySql data type
 	 * @return java type
 	 */
-	@SuppressWarnings("unused")
 	private static Class<?> dataType2javaType(Table.Column.OracleDataType dataType) {
 		Class<?> javaType = null;
 		switch(dataType) {

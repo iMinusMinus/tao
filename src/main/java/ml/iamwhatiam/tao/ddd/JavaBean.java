@@ -166,6 +166,8 @@ public class JavaBean implements Serializable {
 		
 		private String type;
 		
+		private String javaType;
+		
 		private Object defaultValue;
 		
 		private String comment;
@@ -179,7 +181,8 @@ public class JavaBean implements Serializable {
 			}
 			else this.name = name;
 			this.type = javaType.getSimpleName();
-			if(!javaType.isPrimitive() && !javaType.getName().startsWith("java.lang."))
+			this.javaType = javaType.getName();
+			if(!javaType.isPrimitive() && !javaType.getPackage().getName().equals("java.lang."))
 				imports.add(javaType.getName());
 		}
 
@@ -201,6 +204,10 @@ public class JavaBean implements Serializable {
 
 		public void setType(String type) {
 			this.type = type;
+		}
+		
+		public String getJavaType() {
+			return javaType;
 		}
 
 		public Object getDefaultValue() {

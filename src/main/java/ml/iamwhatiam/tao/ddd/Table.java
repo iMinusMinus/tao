@@ -391,13 +391,18 @@ public class Table {
 		}
 
 		public void setDefaultValue(String defaultValue) {
-			if(defaultValue == null) return;
+			if(defaultValue == null || "NULL".equalsIgnoreCase(defaultValue)) 
+				return;
+			if("''".equals(defaultValue)) {
+				this.defaultValue = "";
+				return;
+			}
 			if(dataType == CharacterDataType.CHARACTER || dataType == CharacterDataType.CHARACTER_VARYING
 					|| dataType == MySQLDataType.CHAR || dataType == MySQLDataType.VARCHAR || dataType == MySQLDataType.TINYTEXT 
 					|| dataType == MySQLDataType.MEDIUMTEXT || dataType == MySQLDataType.TEXT || dataType == MySQLDataType.LONGTEXT
 					|| dataType == PostgresDataType.CHARACTER || dataType == PostgresDataType.CHARACTER_VARING || dataType == PostgresDataType.TEXT
 					|| dataType == OracleDataType.CHAR || dataType == OracleDataType.VARCHAR2 || dataType == OracleDataType.CLOB)
-				defaultValue = "'" + defaultValue + "'";
+				defaultValue = "\"" + defaultValue.substring(1, defaultValue.length() - 2) + "\"";
 			this.defaultValue = defaultValue;
 		}
 
