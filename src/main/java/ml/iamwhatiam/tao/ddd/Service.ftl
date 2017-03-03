@@ -15,12 +15,12 @@ import ml.iamwhatiam.tao.ddd.service.CrudService;
 import ml.iamwhatiam.tao.ddd.${namespace}.TransformationHelper;
 import ml.iamwhatiam.tao.ddd.${namespace}.domain.${bean.name}Domain;
 import ml.iamwhatiam.tao.ddd.${namespace}.vo.${bean.name}VO;
-<#/if>
+</#if>
 
 
 /**
   * @author iMinusMinus
-  * @since ${date?string.iso}
+  * @since ${date?string('yyyy-MM-dd')}
   * @version 0.0.1
   */
 @Service("${bean.name}Service")  
@@ -57,11 +57,11 @@ public class ${bean.name}ServiceImpl implements CrudService {
         return ${bean.name}DaoImpl.delete(id);
     }
     
-    public CrudDao<${bean.name}Domain> get${bean.name?upper_first}DaoImpl() {
+    public CrudDao<${bean.name}Domain> get${bean.name?cap_first}DaoImpl() {
         return ${bean.name}DaoImpl;
     }
     
-    public CrudDao<${bean.name}Domain> set${bean.name?upper_first}DaoImpl(CrudDao<${bean.name}Domain> ${bean.name}DaoImpl) {
+    public CrudDao<${bean.name}Domain> set${bean.name?cap_first}DaoImpl(CrudDao<${bean.name}Domain> ${bean.name}DaoImpl) {
         this.${bean.name}DaoImpl = ${bean.name}DaoImpl;
     }
 

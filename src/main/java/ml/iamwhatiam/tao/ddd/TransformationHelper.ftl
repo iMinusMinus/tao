@@ -22,7 +22,7 @@ public class TransformationHelper {
     public static ${bean.name}Domain vo2domain(${bean.name}VO vo) {
         ${bean.name}Domain domain = new ${bean.name}Domain();
         <#list bean.properties as property>
-        domain.set${property.name?upper_first}(vo.get${property.name?upper_first}());
+        domain.set${property.name?cap_first}(vo.get${property.name?cap_first}());
         </#list>
         return domain;
     }
@@ -30,7 +30,7 @@ public class TransformationHelper {
     public static ${bean.name}VO domain2vo(${bean.name}Domain domain) {
         ${bean.name}VO vo = new ${bean.name}VO();
         <#list bean.properties as property>
-        vo.set${property.name?upper_first}(domain.get${property.name?upper_first}());
+        vo.set${property.name?cap_first}(domain.get${property.name?cap_first}());
         </#list>
         return vo;
     }

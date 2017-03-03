@@ -21,7 +21,7 @@ import ml.iamwhatiam.tao.ddd.service.CrudService;
  
 /**
   * @author iMinusMinus
-  * @since ${date?string.iso}
+  * @since ${date?string('yyyy-MM-dd')}
   * @version 0.0.1
   */
 @RequestMapping("/${namespace}")

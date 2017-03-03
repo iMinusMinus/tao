@@ -4,15 +4,18 @@
 package ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.domain</#if>;
  
 import ml.iamwhatiam.tao.domain.Taichi;
-<#list ${bean.imports} as im>
+<#if bean.imports??>
+<#list bean.imports as im>
 ${im};
 </#list>
+</#if>
  
  
 /**
  * <#if bean.comment??>${bean.comment}</#if>
  *
  * @author iMinusMinus
+ * @since ${date?string('yyyy-MM-dd')}
  * @version 0.0.1
  *
  */
@@ -20,7 +23,7 @@ public class ${bean.name}Domain extends Taichi {
  
     private static final long serialVersionUID = 1L;
  	
- 	<#list ${bean.properties} as property>
+ 	<#list bean.properties as property>
  	<#if property.comment??>
  	/**
  	 * ${property.comment}
@@ -28,18 +31,18 @@ public class ${bean.name}Domain extends Taichi {
  	</#if>
  	<#if property.constraints?? && property.constraints?size gt 0>
  	<#list property.constraints as constraint>
- 	@${constraint.type}<#if constraint.values??>(<#list constraint.values as key value><#if key??>${key} = </#if>${value}<#sep>, </#list>)</#if>
+ 	@${constraint.type}<#if constraint.values??>(<#list constraint.values?keys as key><#if key??>${key} = </#if>${constraint.values[key]}<#sep>, </#list>)</#if>
  	</#list>
  	</#if>
  	private ${property.type} ${property.name}<#if property.defaultValue??> = ${property.defaultValue}</#if>;
  	</#list>
  	
- 	<#list ${bean.properties} as property>
- 	public ${property.type} <#if ${property.type} == "boolean">is<#else>get</#if>${property.name?upper_first}() {
+ 	<#list bean.properties as property>
+ 	public ${property.type} <#if property.type == "boolean">is<#else>get</#if>${property.name?cap_first}() {
  		return ${property.name};
  	}
  	
- 	public void set${property.name?upper_first}(${property.type} ${property.name}) {
+ 	public void set${property.name?cap_first}(${property.type} ${property.name}) {
  		this.${property.name} = ${property.name};
  	}
  	</#list>
@@ -48,7 +51,7 @@ public class ${bean.name}Domain extends Taichi {
  	public String toString() {
  	<#-- return String.format(); -->
  	StringBuilder sb = new StringBuilder("{");
- 	<#list ${bean.properties} as property>
+ 	<#list bean.properties as property>
  	sb.append("\"${property.name}\":");
  	if(${property.type} instanceof CharSequence) {
  		sb.append("\"");

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 
 /**
   * @author iMinusMinus
-  * @since ${date?string.iso}
+  * @since ${date?string('yyyy-MM-dd')}
   * @version 0.0.1
   */
 @Repository("${bean.name}Dao")  
