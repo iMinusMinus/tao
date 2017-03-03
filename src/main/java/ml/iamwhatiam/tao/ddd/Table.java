@@ -23,6 +23,7 @@
  */
 package ml.iamwhatiam.tao.ddd;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -111,16 +112,34 @@ public class Table {
 	
 	private final Dialect dialect;
 	
+	private static char quote;
+	
 	public Table (Dialect dialect) {
 		this.dialect = dialect;
+		switch(dialect) {
+		case MYSQL:
+			quote = '`';
+			break;
+		case ORACLE://pass through	
+		case POSTGRES:
+			quote = '"';
+			break;
+		default:	
+		}
 	}
 	
 	private String catalog;//Sybase/MS SQLServer: database name
 	
+	private String catalogIdentifier;
+	
 	private String schema;//Oracle: user, MySQL: database name
+	
+	private String schemaIdentifier;
 	
 	@NotNull
 	private String name;//catalog.schema.tbl_name
+	
+	private String identifier;
 	
 	@Size(max = 1017/*, groups = MySQL*/)
 	private List<Column> columns;
@@ -145,6 +164,13 @@ public class Table {
 		return keywords.contains(name);
 	}
 	
+	static String unquote(String origin) {
+		char[] tmp = origin.toCharArray();
+		if(tmp[0] == quote && tmp[tmp.length - 1] == quote)
+			return new String(tmp, 1, tmp.length - 2);
+		return origin;
+	}
+	
 	public Dialect getDialect() {
 		return dialect;
 	}
@@ -154,7 +180,11 @@ public class Table {
 		return catalog;
 	}
 
-	public void setCatalog(String catalog) {
+	public void setCatalog(String catalogIdentifier) {
+		this.catalogIdentifier = catalogIdentifier;
+		String catalog = unquote(catalogIdentifier);
+		if(isKeyword(catalog))
+			log.warn("table catalog [{}] should better not be sql keywrod", catalog);
 		this.catalog = catalog;
 	}
 
@@ -162,7 +192,11 @@ public class Table {
 		return schema;
 	}
 
-	public void setSchema(String schema) {
+	public void setSchema(String schemaIdentifier) {
+		this.schemaIdentifier = schemaIdentifier;
+		String schema = unquote(schemaIdentifier);
+		if(isKeyword(schema))
+			log.warn("table schema [{}] should better not be sql keywrod", schema);
 		this.schema = schema;
 	}
 
@@ -170,7 +204,9 @@ public class Table {
 		return name;
 	}
 
-	public void setName(String name) {
+	public void setName(String identifier) {
+		this.identifier = identifier;
+		String name = unquote(identifier);
 		if(isKeyword(name))
 			log.warn("table name [{}] should better not be sql keywrod", name);
 		this.name = name;
@@ -191,6 +227,19 @@ public class Table {
 	public void setPk(PrimaryKey pk) {
 		this.pk = pk;
 	}
+	
+	public void addConstraint(Constraint constraint) {
+		if(constraint instanceof PrimaryKey)
+			setPk((PrimaryKey) constraint);
+		else if(constraint instanceof UniqueKey) 
+			addUniqueKey((UniqueKey) constraint);
+		else if(constraint instanceof ForeignKey) 
+			addForeignKey((ForeignKey) constraint);
+		else if(constraint instanceof Index) 
+			addIndex((Index) constraint);
+		else if(constraint instanceof Check) 
+			addCheck((Check) constraint);
+	}
 
 	public List<UniqueKey> getUks() {
 		return uks;
@@ -198,6 +247,12 @@ public class Table {
 
 	public void setUks(List<UniqueKey> uks) {
 		this.uks = uks;
+	}
+	
+	public void addUniqueKey(UniqueKey uk) {
+		if(uks == null)
+			uks = new ArrayList<UniqueKey>();
+		uks.add(uk);
 	}
 
 	public List<ForeignKey> getFks() {
@@ -207,6 +262,12 @@ public class Table {
 	public void setFks(List<ForeignKey> fks) {
 		this.fks = fks;
 	}
+	
+	public void addForeignKey(ForeignKey fk) {
+		if(fks == null)
+			fks = new ArrayList<ForeignKey>();
+		fks.add(fk);
+	}
 
 	public List<Index> getIndexes() {
 		return indexes;
@@ -215,6 +276,12 @@ public class Table {
 	public void setIndexes(List<Index> indexes) {
 		this.indexes = indexes;
 	}
+	
+	public void addIndex(Index index) {
+		if(indexes == null)
+			indexes = new ArrayList<Index>();
+		indexes.add(index);
+	}
 
 	public List<Check> getChecks() {
 		return checks;
@@ -222,6 +289,12 @@ public class Table {
 
 	public void setChecks(List<Check> checks) {
 		this.checks = checks;
+	}
+	
+	public void addCheck(Check ck) {
+		if(checks == null)
+			checks = new ArrayList<Check>();
+		checks.add(ck);
 	}
 
 	public String getComment() {
@@ -239,7 +312,9 @@ public class Table {
 	 */
 	public static class Column {
 		
-		public Column(String name, DataType dataType) {
+		public Column(String identifier, DataType dataType) {
+			this.identifier = identifier;
+			String name = unquote(identifier);
 			if(isKeyword(name))
 				log.warn("column name [{}] should better not be sql keywrod", name);
 			this.name = name;
@@ -248,7 +323,10 @@ public class Table {
 		
 		private Table table;
 		
+		@NotNull
 		private String name;
+		
+		private String identifier;
 		
 		private DataType dataType;
 		
@@ -284,9 +362,11 @@ public class Table {
 			return name;
 		}
 
-		public void setName(String name) {
+		public void setName(String identifier) {
+			this.identifier = identifier;
+			String name = unquote(identifier);
 			if(isKeyword(name))
-				log.warn("column name [{}] should better not be sql keywrod", name);
+				log.warn("table name [{}] should better not be sql keywrod", name);
 			this.name = name;
 		}
 
@@ -311,6 +391,7 @@ public class Table {
 		}
 
 		public void setDefaultValue(String defaultValue) {
+			if(defaultValue == null) return;
 			if(dataType == CharacterDataType.CHARACTER || dataType == CharacterDataType.CHARACTER_VARYING
 					|| dataType == MySQLDataType.CHAR || dataType == MySQLDataType.VARCHAR || dataType == MySQLDataType.TINYTEXT 
 					|| dataType == MySQLDataType.MEDIUMTEXT || dataType == MySQLDataType.TEXT || dataType == MySQLDataType.LONGTEXT
@@ -342,11 +423,12 @@ public class Table {
 		 * 
 	     * primitive data types, or named built-in data types or predefined types
 		 */
-		public static interface DataType {
+		public interface DataType {
 			
 			String toSQL();
 			
 			public static final DataType BOOLEAN = new DataType() {
+				
 				public String toSQL() {
 					return "BOOLEAN";
 				}
@@ -831,6 +913,8 @@ public class Table {
 			
 			boolean withTimeZone();
 			
+			void set(boolean withTimeZone);
+			
 			void set(int precision, boolean withTimeZone);
 			
 			void set(int precision, int intervalClass, int fracionalPrecision);
@@ -846,6 +930,10 @@ public class Table {
 				}
 				
 				public boolean withTimeZone() {
+					throw new UnsupportedOperationException();
+				}
+				
+				public void set(boolean withTimeZone) {
 					throw new UnsupportedOperationException();
 				}
 
@@ -879,6 +967,10 @@ public class Table {
 				
 				public boolean withTimeZone() {
 					return withTimeZone;
+				}
+				
+				public void set(boolean withTimeZone) {
+					this.withTimeZone = withTimeZone;
 				}
 
 				public void set(int precision, boolean withTimeZone) {
@@ -919,6 +1011,10 @@ public class Table {
 				
 				public boolean withTimeZone() {
 					return withTimeZone;
+				}
+				
+				public void set(boolean withTimeZone) {
+					this.withTimeZone = withTimeZone;
 				}
 
 				public void set(int precision, boolean withTimeZone) {
@@ -967,6 +1063,10 @@ public class Table {
 				public boolean withTimeZone() {
 					throw new NotImplementedException();
 				}
+				
+				public void set(boolean withTimeZone) {
+					throw new NotImplementedException();
+				}
 
 				public void set(int precision, boolean withTimeZone) {
 					throw new NotImplementedException();
@@ -977,7 +1077,7 @@ public class Table {
 					this.intervalClass = intervalClass;
 					this.fractionalSecondPrecision = fracionalPrecision;
 				}
-				
+
 				public String toSQL() {
 					StringBuilder sb = new StringBuilder("INTERVAL ");
 					if(intervalClass == YEAR_TO_MONTH) 
@@ -985,7 +1085,7 @@ public class Table {
 					else sb.append("DAY");
 					if(precision > 0) 
 						sb.append(" (").append(precision).append(")");
-					sb.append(" ");
+					sb.append(" TO ");
 					if(intervalClass == YEAR_TO_MONTH)
 						sb.append("MONTH");
 					else if(intervalClass == DAY_TO_HOUR)
@@ -1662,6 +1762,10 @@ public class Table {
 			public boolean withTimeZone() {
 				throw new UnsupportedOperationException();
 			}
+			
+			public void set(boolean withTimeZone) {
+				throw new UnsupportedOperationException();
+			}
 
 			public void set(int precision, boolean withTimeZone) {
 				throw new UnsupportedOperationException();
@@ -1865,6 +1969,10 @@ public class Table {
 					return withTimeZone;
 				}
 				
+				public void set(boolean withTimeZone) {
+					this.withTimeZone = withTimeZone;
+				}
+				
 				public void set(int fraction, boolean withTimeZone) {
 					this.fraction = fraction;
 					this.withTimeZone = withTimeZone;
@@ -1919,7 +2027,7 @@ public class Table {
 					else sb.append("DAY");
 					if(precision > 0) 
 						sb.append(" (").append(precision).append(")");
-					sb.append(" ");
+					sb.append(" TO ");
 					if(intervalClass == YEAR_TO_MONTH)
 						sb.append("MONTH");
 					else sb.append("SECOND");
@@ -1943,6 +2051,10 @@ public class Table {
 			}
 
 			public boolean withTimeZone() {
+				throw new AbstractMethodError();
+			}
+			
+			public void set(boolean withTimeZone) {
 				throw new AbstractMethodError();
 			}
 
@@ -2105,6 +2217,10 @@ public class Table {
 					return withTimeZone;
 				}
 				
+				public void set(boolean withTimeZone) {
+					this.withTimeZone = withTimeZone;
+				}
+				
 				public void set(@Min(0) @Max(10) int precision, boolean withTimeZone) {
 					this.precision = precision;
 					this.withTimeZone = withTimeZone;
@@ -2144,6 +2260,10 @@ public class Table {
 				
 				public boolean withTimeZone() {
 					return withTimeZone;
+				}
+				
+				public void set(boolean withTimeZone) {
+					this.withTimeZone = withTimeZone;
 				}
 				
 				public void set(@Min(0) @Max(6) int precision, boolean withTimeZone) {
@@ -2323,12 +2443,43 @@ public class Table {
 			JSONB,
 			
 			//Arrays: TEXT[][], INTEGER[][], ...
+			ARRAY {
+				private String[] names;
+				
+				private int dimension;
+				
+				public String[] names() {
+					return names;
+				}
+				
+				public int get() {
+					return dimension;
+				}
+
+				public void set(@Size(max = 1, min = 1) String... names) {
+					this.names = names;
+				}
+				
+				public void set(@Min(1) int dimension) {
+					this.dimension = dimension;
+				}
+				
+				@Override
+				public String toSQL() {
+					StringBuilder sb = new StringBuilder();
+					sb.append(PostgresDataType.valueOf(names[0]).toSQL());
+					for(int i = 0; i < dimension; i++)
+						sb.append("[]");
+					return sb.toString();
+				}
+			},
 			
 			//Composite Types: CREATE TYPE name AS {col type}
 			
 			//Range Types: INT4RANGE, INT8RANGE, NUMRANGE, TSRANGE, DATERANGE
 			
 			//Object Identifier Types: oid alias as regproc, regprocedure, regoper, regoperator, regclass, regtype, regrole, regnamespace, regconfig, or regdictionary
+			OID,
 			
 			PG_SLN {
 				@Override public String toSQL() {
@@ -2344,6 +2495,10 @@ public class Table {
 			}
 
 			public boolean withTimeZone() {
+				throw new AbstractMethodError();
+			}
+			
+			public void set(boolean withTimeZone) {
 				throw new AbstractMethodError();
 			}
 
@@ -2398,12 +2553,26 @@ public class Table {
 			DEFAULT;
 		}
 		*/
+		
+		public String toSQL() {
+			StringBuilder sb = new StringBuilder();
+			sb.append(identifier).append(" ").append(dataType.toSQL());
+			if(!nullable)
+				sb.append(" NOT NULL");
+			if(defaultValue != null)
+				sb.append(" DEFAULT ").append(defaultValue);
+			if(autoIncrement)
+				sb.append(" AUTO_INCREMENT");
+			return sb.toString();
+		}
 	}
 	
-	public static class Constraint {
+	public class Constraint {
 		
 		@Pattern(regexp = "[PK|UK|FK|IDX|C]_[0-9A-Z_]+")
 		protected String name;
+		
+		protected String identifier;
 		
 		@Size(min = 1)
 		protected Column[] columns;
@@ -2412,7 +2581,9 @@ public class Table {
 			this.columns = columns;
 		}
 		
-		public Constraint(String name, Column... columns) {
+		public Constraint(String identifier, Column... columns) {
+			this.identifier = identifier;
+			String name = unquote(identifier);
 			if(isKeyword(name))
 				log.warn("constraint name [{}] should better not be sql keywrod", name);
 			this.name = name;
@@ -2423,12 +2594,32 @@ public class Table {
 			return "KEY";
 		}
 		
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String identifier) {
+			this.identifier = identifier;
+			String name = unquote(identifier);
+			if(isKeyword(name))
+				log.warn("constraint name [{}] should better not be sql keywrod", name);
+			this.name = name;
+		}
+
+		public Column[] getColumns() {
+			return columns;
+		}
+
+		public void setColumns(Column[] columns) {
+			this.columns = columns;
+		}
+
 		public String toSQL() {
 			StringBuilder sb = new StringBuilder(getType());
-			if(name != null) sb.append(" ").append(name);
+			if(identifier != null) sb.append(" ").append(identifier);
 			sb.append(" ").append("(");
 			for(int i = 0, j = columns.length; i < j; i++) {
-				sb.append(columns[i].name);
+				sb.append(columns[i].identifier);
 				if(i < j - 1)
 					sb.append(",");
 			}
@@ -2438,7 +2629,7 @@ public class Table {
 		//ignore type and options
 	}
 	
-	public static class PrimaryKey extends Constraint {
+	public class PrimaryKey extends Constraint {
 
 		@Override
 		protected String getType() {
@@ -2483,12 +2674,12 @@ public class Table {
 		
 		@Override
 		public String toSQL() {
-			return super.toSQL() + (algorithm == null ? "" : "USING " + algorithm);
+			return super.toSQL() + (algorithm == null ? "" : " USING " + algorithm);
 		}
 		
 	}
 	
-	public static class UniqueKey extends Constraint {
+	public class UniqueKey extends Constraint {
 		
 		@Override
 		protected String getType() {
@@ -2496,7 +2687,7 @@ public class Table {
 		}
 	}
 	
-	public static class ForeignKey extends Constraint {
+	public class ForeignKey extends Constraint {
 		
 		@Size(min = 1)
 		private Column[] references;
@@ -2504,6 +2695,10 @@ public class Table {
 //		private Action onUpdate = Action.RESTRICT;
 //		
 //		private Action onDelete = Action.RESTRICT;
+		
+		public ForeignKey() {
+			
+		}
 		
 		public ForeignKey(String name, Column[] self, Column[] reference) {
 			if(isKeyword(name))
@@ -2514,21 +2709,29 @@ public class Table {
 			this.references = reference;
 		}
 		
+		public Column[] getReferences() {
+			return references;
+		}
+
+		public void setReferences(Column[] references) {
+			this.references = references;
+		}
+
 		@Override
 		public String toSQL() {
 			StringBuilder sb = new StringBuilder("CONSTRAINT");
-			sb.append(" ").append(name);
+			sb.append(" ").append(identifier);
 			sb.append(" FOREIGN KEY (");
 			for(int i = 0, j = columns.length; i < j; i++) {
-				sb.append(columns[i].name);
+				sb.append(columns[i].identifier);
 				if(i != j - 1)
 				sb.append(",");
 			}
 			sb.append(")").append(" REFERENCES ");
-			sb.append(references[0].table.name);
+			sb.append(references[0].table.identifier);
 			sb.append(" (");
 			for(int i = 0, j = references.length; i < j; i++) {
-				sb.append(references[i].name);
+				sb.append(references[i].identifier);
 				if(i < j - 1)
 					sb.append(",");
 			}
@@ -2546,7 +2749,7 @@ public class Table {
 		}*/
 	}
 	
-	public static class Check extends Constraint {
+	public class Check extends Constraint {
 		
 		private String searchCondition;//exec will return true or false
 		
@@ -2595,14 +2798,13 @@ public class Table {
 	
 	public String toSQL() {
 		StringBuilder sb = new StringBuilder("CREATE TABLE ");
-		sb.append(name).append(" (\n");
+		if(catalogIdentifier != null)
+			sb.append(catalogIdentifier).append(".");
+		if(schemaIdentifier != null)
+			sb.append(schemaIdentifier).append(".");
+		sb.append(identifier).append(" (\n");
 		for(int i = 0, j = columns.size(); i < j; i++) {
-			sb.append("\"").append(columns.get(i).name).append(" ").append(columns.get(i).getDataType());
-			if(!columns.get(i).nullable)
-				sb.append(" NOT NULL");
-			if(columns.get(i).defaultValue != null)
-				sb.append(" DEFAULT ").append(columns.get(i).defaultValue);
-			sb.append(",\n");
+			sb.append(columns.get(i).toSQL()).append(",\n");
 		}
 		if(indexes != null && !indexes.isEmpty()) {
 			for(Index index : indexes)
