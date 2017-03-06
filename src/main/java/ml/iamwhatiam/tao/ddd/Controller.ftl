@@ -1,7 +1,7 @@
 <#import "pub.ftl" as software>
 <@software.license />
 
-package ml.iamwhatiam.tao.ddd.${namespace};
+package ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.web</#if>;
  
 import java.util.List;
 
@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 <#-- no need to import if Controller, Service, DAO and indeed POJOs are in same package -->
-<#if !samePackage>import ml.iamwhatiam.tao.ddd.${namespace}.vo.${bean.name}VO;</#if>
-import ml.iamwhatiam.tao.ddd.service.CrudService;
+<#if !samePackage>import ml.iamwhatiam.tao.ddd.${namespace}.vo.${bean.name?cap_first}VO;</#if>
+import ml.iamwhatiam.tao.service.CrudService;
 
  
 /**
@@ -26,41 +26,43 @@ import ml.iamwhatiam.tao.ddd.service.CrudService;
   */
 @RequestMapping("/${namespace}")
 @Controller
-public class ${bean.name}Controller {
+public class ${bean.name?cap_first}Controller {
 
     @Resource(name = "${bean.name}Service")
-    private CrudService<${bean.name}VO> service;
+    private CrudService<${bean.name?cap_first}VO> service;
 
     @RequestMapping(value = "/${bean.name}", method = RequestMethod.GET)
     @ResponseBody
-    public List<${bean.name}VO> index() {
+    public List<${bean.name?cap_first}VO> index() {
         return service.findAll();
     }
 
     @RequestMapping(value = "/${bean.name}/{id}", method = RequestMethod.GET)
     @ResponseBody
-    public ${bean.name}VO show(@PathVariable("id") long id) {
-        return service.findById(id);
+    public ${bean.name?cap_first}VO show(@PathVariable("id") long id) {
+        return service.findOne(id);
     }
     
     <#-- 
     @RequestMapping(value = "/${bean.name}", method = RequestMethod.POST)
     @ResponseBody
-    public List<${bean.name}VO> search(@Valid ${bean.name}VO form, BindingResult br) {
+    public List<${bean.name?cap_first}VO> search(@Valid ${bean.name?cap_first}VO form, BindingResult br) {
         return service.find(form);
     }
     -->
 
     @ResquestMapping(value = "/${bean.name}", method = RequestMethod.POST)
     @ResponseBody
-    public ${bean.name}VO create(@Valid ${bean.name}VO form, BindingResult br) {
-        return service.save(form);
+    public ${bean.name?cap_first}VO create(@Valid ${bean.name?cap_first}VO form, BindingResult br) {
+    	service.save(form);
+        return form;
     }
 
     @RequestMapping(value = "/${bean.name}/{id}", method = RequestMethod.PUT)
     @ResponseBody
-    public boolean edit(@PathVariable("id") long id, @Valid ${bean.name}VO form, BindingResult br) {
-        return service.update();
+    public ${bean.name?cap_first}VO edit(@PathVariable("id") long id, @Valid ${bean.name?cap_first}VO form, BindingResult br) {
+    	service.update(form);
+        return form;
     }
 
     @RequestMapping(value = "/${bean.name}/{id}", method = RequestMethod.DELETE)
@@ -69,11 +71,11 @@ public class ${bean.name}Controller {
         return service.remove(id);
     }
 
-    public Service getService() {
+    public CrudService<${bean.name?cap_first}VO> getService() {
         return service;
     }
 
-    public void setService(Service service) {
+    public void setService(CrudService<${bean.name?cap_first}VO> service) {
         this.service = service;
     }
  }

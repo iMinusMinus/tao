@@ -54,7 +54,7 @@
 	<#list table.columns as column>
 		<#list bean.properties as property>
 		<#if property.name?upper_case == column.name?replace('_', '')?upper_case>
-		<result column="${column.name}" property="${property.name}" javaType="${property.javaType}" /><!-- jdbcType=${column.dataType} -->
+		<result column="${column.name}" property="${property.name}" javaType="${property.type}" /><!-- jdbcType=${column.dataType} -->
 		</#if>
 		</#list>
 	</#list>

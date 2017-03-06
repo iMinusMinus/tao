@@ -57,7 +57,7 @@ public interface CrudService<T> {
 	 * @param form condition
 	 * @return
 	 */
-	int count(T form);
+	long count(T form);
 	
 	/**
 	 * find one by specified id
@@ -65,7 +65,7 @@ public interface CrudService<T> {
 	 * @param id
 	 * @return
 	 */
-	T findById(long id);
+	T findOne(long id);
 	
 	/**
 	 * persist data

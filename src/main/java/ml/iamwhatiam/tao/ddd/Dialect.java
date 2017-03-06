@@ -37,9 +37,13 @@ public enum Dialect {
 	MYSQL,//check not working
 	POSTGRES,
 	DB2,
-	SQLSERVER,
+	MS_SQL,
 	SYBASE,
-	INFOMIX;
+	INFOMIX,
+	//Derby
+	//H2,
+	//HSQL,
+	;
 	
 	private int major;
 	

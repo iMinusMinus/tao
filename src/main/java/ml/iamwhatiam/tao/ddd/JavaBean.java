@@ -157,6 +157,10 @@ public class JavaBean implements Serializable {
 		properties.add(property);
 	}
 
+	public Set<String> getImports() {
+		return imports;
+	}
+
 
 	public class Property implements Serializable {
 
@@ -166,7 +170,7 @@ public class JavaBean implements Serializable {
 		
 		private String type;
 		
-		private String javaType;
+		private Class<?> klazz;
 		
 		private Object defaultValue;
 		
@@ -175,14 +179,14 @@ public class JavaBean implements Serializable {
 		private List<Constraint> constraints;
 		
 		public Property(String name, Class<?> javaType) {
+			this.klazz = javaType;
 			if(keywords.contains(name)) {
 				log.error("field name must not be java keyword: [{}]", name);
 				throw new IllegalArgumentException("field name must not be java keyword");
 			}
 			else this.name = name;
-			this.type = javaType.getSimpleName();
-			this.javaType = javaType.getName();
-			if(!javaType.isPrimitive() && !javaType.getPackage().getName().equals("java.lang."))
+			this.type = javaType.getName();
+			if(!javaType.isPrimitive() && !javaType.getPackage().getName().equals("java.lang"))
 				imports.add(javaType.getName());
 		}
 
@@ -206,8 +210,8 @@ public class JavaBean implements Serializable {
 			this.type = type;
 		}
 		
-		public String getJavaType() {
-			return javaType;
+		public Class<?> getKlazz() {
+			return klazz;
 		}
 
 		public Object getDefaultValue() {
@@ -254,7 +258,7 @@ public class JavaBean implements Serializable {
 		
 		public Constraint(Class<? extends Annotation> type) {
 			this.type = type.getSimpleName();
-			if(!type.getName().startsWith("java.lang."))
+			if(!type.getPackage().getName().equals("java.lang"))
 				imports.add(type.getName());
 		}
 		

@@ -26,7 +26,6 @@ package ml.iamwhatiam.tao.ddd;
 import java.io.ByteArrayInputStream;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 

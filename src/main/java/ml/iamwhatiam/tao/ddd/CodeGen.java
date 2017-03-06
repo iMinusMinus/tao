@@ -52,11 +52,16 @@ public final class CodeGen {
 	
 	private GeneratePolicy policy;
 	
+	private Dialect dialect;
+	
 	private String[] tpls;
+	
+	private String[] dirs;
 	
 	public CodeGen() {
 		policy = GeneratePolicy.SOURCE;
-		tpls = new String[] {"Controller.ftl", "Service.ftl", "DAO.ftl", "VO.ftl", "Domain.ftl", "sqlMap.ftl", "TransformationHelper.ftl"};
+		tpls = new String[] {"Controller.ftl", "ServiceImpl.ftl", "DAOImpl.ftl", "VO.ftl", "Domain.ftl", "sqlMap.ftl", "TransformationHelper.ftl"};
+		dirs = new String[] {"web", "service", "dao", "vo", "domain", "mapper", "support"};
 	}
 	
 	public static void main(String[] args) {
@@ -145,7 +150,8 @@ public final class CodeGen {
 		Configuration cfg = new Configuration(Configuration.VERSION_2_3_22);
         cfg.setClassForTemplateLoading(CodeGen.class, "/ml/iamwhatiam/tao/ddd");
         CodeGen cg = new CodeGen();
-        for(String tpl : cg.tpls) {
+        for(int i = 0; i < cg.tpls.length; i++) {
+        	String tpl = cg.tpls[i];
         	Writer out = null;
         	String name = null;
         	if((simplify & 1) != 0 && (tpl.equals("VO.ftl") || tpl.equals("TransformationHelper.ftl")))
@@ -155,7 +161,7 @@ public final class CodeGen {
         	if((simplify & 4) != 0 && tpl.equals("Service.ftl"))
         		continue;
         	if(config.indexOf("SpringMVC") == 0 && tpl.equals("Controller.ftl")) continue;//Struts2 and so on
-        	if(config.indexOf("iBatis") == 0 && (tpl.equals("sqlMap.ftl") || tpl.equals("DAO.ftl"))) continue;//Hibernate and so on
+        	if(config.indexOf("Batis") == 0 && (tpl.equals("sqlMap.ftl") || tpl.equals("DAO.ftl"))) continue;//Hibernate and so on
         	try {
         		switch(cg.policy) {
         		case SOURCE: 
@@ -163,7 +169,7 @@ public final class CodeGen {
         			if("sqlMap.".equals(old))
         				name = old + ".xml";
         			else name = old + "java";//XxxPattern or Pattern?
-	        		File file = new File(target + name);//FIXME when Controller, Service etc. not in same package
+	        		File file = new File(target + cg.dirs[i] + File.separator + capFirst(bean.getName()) + name);//FIXME when Controller, Service etc. not in same package
 	        		if(!file.getParentFile().exists())
 	        			file.getParentFile().mkdirs();
 	        		file.createNewFile();
@@ -181,6 +187,14 @@ public final class CodeGen {
 				e.printStackTrace();
 			}
         }
+	}
+	
+	private static String capFirst(String camelCase) {
+		if(camelCase == null) return null;
+		char[] array = camelCase.toCharArray();
+		if(array[0] >= 'a' && array[0] <= 'z')
+			array[0] = Character.toUpperCase(array[0]);
+		return new String(array);
 	}
 
 }

@@ -77,8 +77,8 @@ public class TransformationHelper {
 				toUpper = true;
 				continue;
 			}
-			if(toUpper && string[i] >= 'a' && string[i] <= 'z')
-				sb.append((char) (string[i] - 32));
+			if(toUpper)
+				sb.append(Character.toUpperCase((char) string[i]));
 			else sb.append(string[i]);
 			toUpper = false;
 		}
@@ -355,8 +355,37 @@ public class TransformationHelper {
 	
 	public static ViewModel bean2form(JavaBean bean) {
 		ViewModel form = new ViewModel();
-		//TODO
+		form.setName(bean.getName());
+		form.setAction(bean.getName());
+		List<JavaBean.Property> properties = bean.getProperties();
+		for(JavaBean.Property property : properties) {
+			if(property.getKlazz() == List.class) 
+				form.addSelect(property2select(property));
+//			else if()
+			else form.addInput(property2input(property));
+		}
 		return form;
+	}
+	
+	private static ViewModel.Input property2input(JavaBean.Property property) {
+		ViewModel.Input input = new ViewModel.Input(property.getName(), javaType2inputType(property.getKlazz()));
+		//TODO
+		return input;
+	}
+	
+	private static ViewModel.Select property2select(JavaBean.Property property) {
+		//TODO
+		return null;
+	}
+	
+	private static ViewModel.DataList property2datalist(JavaBean.Property property) {
+		//TODO
+		return null;
+	}
+	
+	private static ViewModel.TextArea property2textArea(JavaBean.Property property) {
+		//TODO
+		return null;
 	}
 	
 	private static ViewModel.Input.Type javaType2inputType(Class<?> klazz) {

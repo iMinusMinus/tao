@@ -600,6 +600,12 @@ public class ViewModel {
 	public void setInputs(List<Input> inputs) {
 		this.inputs = inputs;
 	}
+	
+	public void addInput(Input input) {
+		if(inputs == null)
+			inputs = new ArrayList<Input>();
+		inputs.add(input);
+	}
 
 
 	public List<Select> getSelects() {
@@ -609,6 +615,12 @@ public class ViewModel {
 
 	public void setSelects(List<Select> selects) {
 		this.selects = selects;
+	}
+	
+	public void addSelect(Select select) {
+		if(selects == null)
+			selects = new ArrayList<Select>();
+		selects.add(select);
 	}
 
 
@@ -620,6 +632,12 @@ public class ViewModel {
 	public void setDatalist(List<DataList> datalist) {
 		this.datalist = datalist;
 	}
+	
+	public void addDatalist(DataList dataList) {
+		if(datalist == null)
+			datalist = new ArrayList<DataList>();
+		datalist.add(dataList);
+	}
 
 
 	public List<TextArea> getTextAreas() {
@@ -629,6 +647,12 @@ public class ViewModel {
 
 	public void setTextAreas(List<TextArea> textAreas) {
 		this.textAreas = textAreas;
+	}
+	
+	public void addTextAreas(TextArea textArea) {
+		if(textAreas == null)
+			textAreas = new ArrayList<TextArea>();
+		textAreas.add(textArea);
 	}
 	
 	@Override

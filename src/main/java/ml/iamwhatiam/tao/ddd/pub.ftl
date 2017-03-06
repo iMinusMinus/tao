@@ -8,6 +8,9 @@
 		</#if>
 	</#list>
 </#macro>
+<#function  getSimpleName name>
+	<#return name?keep_after_last(".")>
+</#function >
 <#macro license>
 /**
  * MIT License
