@@ -252,19 +252,23 @@ public class JavaBean implements Serializable {
 		
 		private String type;
 		
+		private Class<? extends Annotation> annotationType;
+		
 		private Map<String, Object> values;
 		
 		//ignore message, payload and groups
 		
 		public Constraint(Class<? extends Annotation> type) {
 			this.type = type.getSimpleName();
+			this.annotationType = type;
 			if(!type.getPackage().getName().equals("java.lang"))
 				imports.add(type.getName());
 		}
 		
 		public Constraint(Class<? extends Annotation> type, Map<String, Object> values) {
 			this.type = type.getSimpleName();
-			if(!type.getName().startsWith("java.lang."))
+			this.annotationType = type;
+			if(!type.getPackage().getName().equals("java.lang"))
 				imports.add(type.getName());
 			this.values = values;
 		}
@@ -275,6 +279,10 @@ public class JavaBean implements Serializable {
 
 		public void setType(String type) {
 			this.type = type;
+		}
+
+		public Class<? extends Annotation> getAnnotationType() {
+			return annotationType;
 		}
 
 		public Map<String, Object> getValues() {
