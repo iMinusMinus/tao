@@ -25,11 +25,26 @@ package ml.iamwhatiam.tao.ddd;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Future;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Past;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ml.iamwhatiam.tao.constraints.Enumeration;
 import ml.iamwhatiam.tao.util.ReflectionUtils;
@@ -44,6 +59,8 @@ import ml.iamwhatiam.tao.util.ReflectionUtils;
  *
  */
 public class TransformationHelper {
+	
+	private static Logger log = LoggerFactory.getLogger(TransformationHelper.class);
 	
 	private static final Map<String, String> PRIMITIVE;
 	
@@ -100,9 +117,13 @@ public class TransformationHelper {
 		Map<String, List<JavaBean.Constraint>> constraints = new HashMap<String, List<JavaBean.Constraint>>();
 		if(table.getChecks() != null)
 			for(Table.Check check : table.getChecks()) {
-				Map<String, JavaBean.Constraint> constraint = check2constraint(bean, check);
+				JavaBean.Constraint constraint = check2constraint(bean, check);
 				if(constraint != null) {
-					
+					String key = snake2camel(check.getColumns()[0].getName());
+					List<JavaBean.Constraint> list = constraints.get(key);
+					if(list == null) list = new ArrayList<JavaBean.Constraint>();
+					list.add(constraint);
+					constraints.put(key, list);
 				}
 			}
 		for(Table.Column column : table.getColumns()) {
@@ -147,16 +168,61 @@ public class TransformationHelper {
 	}
 	
 	/**
-	 * transform table/column check to bean property constraint
+	 * experiment<hr>transform table/column check to bean property constraint
 	 * 
 	 * @param bean meta bean instance
 	 * @param check meta table check
 	 * @return bean property constraint
 	 */
-	static Map<String, JavaBean.Constraint> check2constraint(JavaBean bean, Table.Check check) {
-//		JavaBean.Constraint constraint = bean.new Constraint();
-		//TODO
-		return null;
+	static JavaBean.Constraint check2constraint(JavaBean bean, Table.Check check) {
+		JavaBean.Constraint constraint = null;
+		if(check.getColumns().length != 1) {
+			log.warn("canot understand check with more than one column");
+			return null;
+		}
+		if(check.getSearchCondition() == null) {
+			log.warn("check expression cannot be null");
+			return null;
+		}
+		Class<?> klazz = dataType2javaType(check.getColumns()[0].getDataType());
+		Map<String, Object> values = new HashMap<String, Object>();
+		String value = check.getSearchCondition().split(">=?|<=?|LIKE|like")[1].trim();
+		if(check.getSearchCondition().contains(">")) {
+			if(klazz == Date.class) {
+				constraint = bean.new Constraint(Future.class);//maybe not correct
+				constraint.setValues(null);
+				return constraint;
+			}	
+			else if(klazz == BigDecimal.class || klazz == BigInteger.class) {
+				constraint = bean.new Constraint(DecimalMin.class);
+				values.put("value", value);
+			}	
+			else {
+				constraint = bean.new Constraint(Min.class);
+				values.put("value", Long.parseLong(value));
+			}
+		}
+		else if(check.getSearchCondition().contains("<")) {
+			if(klazz == Date.class) {
+				constraint = bean.new Constraint(Past.class);//maybe not correct
+				constraint.setValues(null);
+				return constraint;
+			}	
+			else if(klazz == BigDecimal.class || klazz == BigInteger.class) {
+				constraint = bean.new Constraint(DecimalMax.class);
+				values.put("value", value);
+			}	
+			else {
+				constraint = bean.new Constraint(Max.class);
+				values.put("value", Long.parseLong(value));
+			}
+		}
+		else if(check.getSearchCondition().contains("LIKE")) {
+			constraint = bean.new Constraint(Pattern.class);
+			values.put("regexp", value);
+		}
+		constraint.setValues(values);
+		return constraint;
 	}
 	
 	/**
@@ -359,7 +425,7 @@ public class TransformationHelper {
 		form.setAction(bean.getName());
 		List<JavaBean.Property> properties = bean.getProperties();
 		for(JavaBean.Property property : properties) {
-			if(property.getKlazz() == List.class) 
+			if(property.getKlazz() == Set.class) 
 				form.addSelect(property2select(property));
 //			else if()
 			else form.addInput(property2input(property));
@@ -369,13 +435,21 @@ public class TransformationHelper {
 	
 	private static ViewModel.Input property2input(JavaBean.Property property) {
 		ViewModel.Input input = new ViewModel.Input(property.getName(), javaType2inputType(property.getKlazz()));
-		//TODO
+		input.setValue(property.getDefaultValue().toString());
+		constraint2attribute(input, property.getConstraints());
 		return input;
 	}
 	
 	private static ViewModel.Select property2select(JavaBean.Property property) {
+		ViewModel.Select select = new ViewModel.Select();
+		select.setName(property.getName());
+		List<ViewModel.Option> options = new ArrayList<ViewModel.Option>();
+		Class<?> klazz = property.getKlazz();
 		//TODO
-		return null;
+		select.setOptions(options);
+		property.getDefaultValue();
+		
+		return select;
 	}
 	
 	private static ViewModel.DataList property2datalist(JavaBean.Property property) {
@@ -388,9 +462,48 @@ public class TransformationHelper {
 		return null;
 	}
 	
+	private static void constraint2attribute(ViewModel.Input owner, List<JavaBean.Constraint> constraints) {
+		if(constraints == null || constraints.isEmpty()) return;
+		for(JavaBean.Constraint constraint : constraints) {
+			if(constraint.getAnnotationType() == Max.class || constraint.getAnnotationType() == DecimalMax.class) {
+				Object value = constraint.getValues().get("value");
+				if(value == null) value = constraint.getValues().get(null);
+				owner.setMax(String.valueOf(value));
+			}
+			else if(constraint.getAnnotationType() == Min.class || constraint.getAnnotationType() == DecimalMin.class) {
+				Object value = constraint.getValues().get("value");
+				if(value == null) value = constraint.getValues().get(null);
+				owner.setMin(String.valueOf(value));
+			}
+			else if(constraint.getAnnotationType() == NotNull.class) {
+				owner.setRequired(true);
+			}
+			
+			else if(constraint.getAnnotationType() == Size.class) {
+				Object value = constraint.getValues().get("max");
+				if(value != null)
+					owner.setSize(Integer.valueOf(String.valueOf(value)));
+			}
+			else if(constraint.getAnnotationType() == Pattern.class) {
+				Object value = constraint.getValues().get("regexp");
+				if(value == null) value = constraint.getValues().get(null);
+				owner.setPattern(String.valueOf(value));
+			}
+			else log.warn("no [{}] correspond constraint handler", constraint.getAnnotationType());
+		}
+		
+	}
+	
 	private static ViewModel.Input.Type javaType2inputType(Class<?> klazz) {
+		ViewModel.Input.Type type = ViewModel.Input.Type.TEXT;
+		if(Number.class.isAssignableFrom(klazz))
+			type = ViewModel.Input.Type.NUMBER;
+		else if(Date.class.isAssignableFrom(klazz))
+			type = ViewModel.Input.Type.DATETIME;
+		else if(Collection.class.isAssignableFrom(klazz))
+			type = ViewModel.Input.Type.CHECKBOX;
 		//TODO
-		return null;
+		return type;
 	}
 	
 }
