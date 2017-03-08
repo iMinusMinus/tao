@@ -2730,7 +2730,7 @@ public class Table {
 			for(int i = 0, j = columns.length; i < j; i++) {
 				sb.append(columns[i].identifier);
 				if(i != j - 1)
-				sb.append(",");
+					sb.append(",");
 			}
 			sb.append(")").append(" REFERENCES ");
 			sb.append(references[0].table.identifier);

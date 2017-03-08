@@ -24,6 +24,9 @@
 package ml.iamwhatiam.tao.ddd;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -44,7 +47,18 @@ public class SQLParserTest {
 	 */
 	@Test
 	public void testTraditionalStyle() {
-		//TODO
+		SQLParser parser = new SQLParser(Dialect.ORACLE);
+		try {
+			Table table = parser.parse(new FileInputStream(new File("src/test/resources/oracle.sql")));
+			Assert.assertEquals("EMP", table.getName());
+			Assert.assertEquals(8, table.getColumns().size());
+			Assert.assertFalse(table.getColumns().get(0).isNullable());
+			Assert.assertEquals(2, ((Table.Column.OracleDataType) table.getColumns().get(7).getDataType()).getPrecision());
+			Assert.assertEquals("deptno", table.getColumns().get(7).getName());
+			Assert.assertNotNull(table.getFks());
+		} catch (FileNotFoundException e) {
+			Assert.fail("sql not found");
+		}
 	}
 	
 	/**
@@ -151,6 +165,16 @@ public class SQLParserTest {
 		Assert.assertEquals(3, table.getColumns().size());
 		Assert.assertFalse(table.getColumns().get(0).isNullable());
 		Assert.assertEquals(3, table.getIndexes().size());
+	}
+	
+	@Test
+	public void testEnum() {
+		Table.Column.OracleDataType type1 = Table.Column.OracleDataType.valueOf("NUMBER");
+		type1.set(7, 3);
+		Table.Column.OracleDataType type2 = Table.Column.OracleDataType.valueOf("NUMBER");
+		type2.set(10, 4);
+		Assert.assertEquals(type1.getPrecision(), type2.getPrecision());
+		Assert.assertEquals(type1.getScale(), type2.getScale());
 	}
 
 }

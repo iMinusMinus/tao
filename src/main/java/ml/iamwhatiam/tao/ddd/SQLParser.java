@@ -323,7 +323,7 @@ public class SQLParser {
 			if("DEFAULT".equalsIgnoreCase(unknow)) {
 				defaultValue = nextWord(start, length);
 			}
-			else if("NOT".equals(unknow)) {
+			else if("NOT".equalsIgnoreCase(unknow)) {
 				String tmp = nextWord(start, length);
 				start = start + tmp.length() + 1;
 				if("NULL".equalsIgnoreCase(tmp))
@@ -732,6 +732,7 @@ public class SQLParser {
 		String test = nextWord();
 		if("CREATE".equalsIgnoreCase(test)) {
 			parseIndex();
+			position++;
 		}
 		else if("ALTER".equalsIgnoreCase(test)) {
 			match(nextWord(), "TABLE");
@@ -774,7 +775,22 @@ public class SQLParser {
 				columns[i] = findColumn(columnNames[i]);
 			}
 			constraint.setColumns(columns);
+			if("FOREIGN".equalsIgnoreCase(unknow)) {
+				if(position < sb.length() && sb.charAt(position) == SPACE)
+					position++;
+				match(nextWord(), "REFERENCES");
+				Table reference = new Table(dialect);
+				reference.setName(parseTableName().pop());
+				String[] refColumns = findColumnNames();
+				Table.Column[] cols = new Table.Column[refColumns.length];
+				for(int i = 0; i <  refColumns.length; i++) {
+					cols[i] = new Table.Column(refColumns[i], null);
+					cols[i].setTable(reference);
+				}
+				((Table.ForeignKey) constraint).setReferences(cols);
+			}
 			table.addConstraint(constraint);
+			position++;
 		}
 		else if("COMMENT".equalsIgnoreCase(test)){
 			position = offset;
@@ -833,7 +849,7 @@ public class SQLParser {
 	
 	private void match(String actual, String expect) {
 		if(!actual.equalsIgnoreCase(expect))
-			throw new RuntimeException(String.format("syntax error, keyword [] expected, but actual is []", expect, actual));
+			throw new RuntimeException(String.format("syntax error, keyword [%s] expected, but actual is [%s]", expect, actual));
 	}
 	
 	private String[] findColumnNames() {
@@ -865,7 +881,7 @@ public class SQLParser {
 	
 	private Table.Column findColumn(String name, Table table) {
 		for(Table.Column column : table.getColumns()) {
-			if(column.getName().equals(Table.unquote(name)))
+			if(column.getName().equals(Table.unquote(name)) || (dialect != Dialect.POSTGRES && column.getName().equalsIgnoreCase(Table.unquote(name))))
 				return column;
 		}
 		log.error("column [{}] not find", name);
