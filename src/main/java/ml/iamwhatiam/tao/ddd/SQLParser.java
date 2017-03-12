@@ -315,6 +315,7 @@ public class SQLParser {
 		String name = parseColumnName(offset, length);
 		Table.Column.DataType dataType = parseColumnDataType(offset + name.length() + 1, length);
 		Table.Column column = new Table.Column(name, dataType);
+		column.setTable(table);
 		Boolean nullable = null, autoIncrement = null;
 		String defaultValue = null, comment = null;
 		for(int start = offset + name.length() + 1; start < length; ) {
@@ -343,7 +344,6 @@ public class SQLParser {
 		if(autoIncrement != null)
 			column.setAutoIncrement(autoIncrement.booleanValue());
 		column.setComment(comment);
-		column.setTable(table);
 		return column;
 	}
 	
@@ -480,7 +480,7 @@ public class SQLParser {
 		Table.Column.DataType dataType = null;
 		switch(dialect) {
 		case MYSQL:
-			Table.Column.MySQLDataType mysql = Table.Column.MySQLDataType.valueOf(type);
+			Table.Column.MySQLDataType mysql = new Table.Column.MySQLDataType(type);
 			if(names != null) mysql.set(names);
 			if(precision != null) {
 				if(scale != null) {
@@ -505,7 +505,7 @@ public class SQLParser {
 			dataType = mysql;
 			break;
 		case POSTGRES:
-			Table.Column.PostgresDataType pg = Table.Column.PostgresDataType.valueOf(type);
+			Table.Column.PostgresDataType pg = new Table.Column.PostgresDataType(type);
 			if(names != null) pg.set(names);
 			if(precision != null) {
 				if(scale != null)
@@ -527,7 +527,7 @@ public class SQLParser {
 			dataType = pg;
 			break;
 		case ORACLE:
-			Table.Column.OracleDataType oracle = Table.Column.OracleDataType.valueOf(type);
+			Table.Column.OracleDataType oracle = new Table.Column.OracleDataType(type);
 			if(precision != null) {
 				if(scale != null)
 					oracle.set(precision.intValue(), scale.intValue());
