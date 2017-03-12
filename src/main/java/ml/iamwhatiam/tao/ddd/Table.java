@@ -25,8 +25,10 @@ package ml.iamwhatiam.tao.ddd;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.validation.constraints.Max;
@@ -397,11 +399,7 @@ public class Table {
 				this.defaultValue = "";
 				return;
 			}
-			if(dataType == CharacterDataType.CHARACTER || dataType == CharacterDataType.CHARACTER_VARYING
-					|| dataType == MySQLDataType.CHAR || dataType == MySQLDataType.VARCHAR || dataType == MySQLDataType.TINYTEXT 
-					|| dataType == MySQLDataType.MEDIUMTEXT || dataType == MySQLDataType.TEXT || dataType == MySQLDataType.LONGTEXT
-					|| dataType == PostgresDataType.CHARACTER || dataType == PostgresDataType.CHARACTER_VARING || dataType == PostgresDataType.TEXT
-					|| dataType == OracleDataType.CHAR || dataType == OracleDataType.VARCHAR2 || dataType == OracleDataType.CLOB)
+			if(getAvailableType().get(dataType) == CharacterType.class)
 				defaultValue = "\"" + defaultValue.substring(1, defaultValue.length() - 2) + "\"";
 			this.defaultValue = defaultValue;
 		}
@@ -420,6 +418,41 @@ public class Table {
 
 		public void setComment(String comment) {
 			this.comment = comment;
+		}
+		
+		private Map<String, Class<? extends DataType>> getAvailableType() {
+			Map<String, Class<? extends DataType>> available = null;
+			switch(table.getDialect()) {
+			case MYSQL: available = MySQLDataType.types; break;
+			case ORACLE: available = OracleDataType.types; break;
+			case POSTGRES: available = PostgresDataType.types; break;
+			default: {
+				available = new HashMap<String, Class<? extends DataType>>();
+				available.put("BOOLEAN", DataType.class);
+				available.put("CHARACTER", CharacterType.class);
+				available.put("CHARACTER VARYING", CharacterType.class);
+				available.put("CHARACTER LARGE OBJECT", CharacterType.class);
+				available.put("BINARY", CharacterType.class);
+				available.put("BINARY VARYING", CharacterType.class);
+				available.put("BINARY LARGE OBJECT", CharacterType.class);
+				available.put("BIT", CharacterType.class);
+				available.put("BIT VARYING", CharacterType.class);
+				available.put("DECIMAL", NumericType.class);
+				available.put("SMALLINT", NumericType.class);
+				available.put("INTEGER", NumericType.class);
+				available.put("BIGINT", NumericType.class);
+				available.put("BINARY", NumericType.class);
+				available.put("FLOAT", NumericType.class);
+				available.put("REAL", NumericType.class);
+				available.put("DOUBLE PRECISION", NumericType.class);
+				available.put("ENUMERATED", EnumeratedType.class);
+				available.put("DATE", DateTimeType.class);
+				available.put("TIME", DateTimeType.class);
+				available.put("TIMESTAMP", DateTimeType.class);
+				available.put("INTERVAL", DateTimeType.class);
+			}
+			}
+			return available;
 		}
 
 		/**
@@ -441,13 +474,13 @@ public class Table {
 			
 		}
 		
-		public static interface CharacterDataType extends DataType {
+		public static interface CharacterType extends DataType {
 			
 			int get();
 			
 			void set(int length);
 			
-			public static final DataType CHARACTER = new CharacterDataType() {
+			public static final DataType CHARACTER = new CharacterType() {
 				
 				@Min(1)
 				private int length;
@@ -468,7 +501,7 @@ public class Table {
 				}
 			};
 			
-			public static final DataType CHARACTER_VARYING = new CharacterDataType() {
+			public static final DataType CHARACTER_VARYING = new CharacterType() {
 				
 				@Min(1)
 				private int length;
@@ -490,7 +523,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType CHARACTER_LARGE_OBJECT = new CharacterDataType() {//CLOB, TEXT
+			public static final DataType CHARACTER_LARGE_OBJECT = new CharacterType() {//CLOB, TEXT
 
 				public void set(int length) {
 					throw new NotImplementedException();
@@ -507,7 +540,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType BINARY = new CharacterDataType() {
+			public static final DataType BINARY = new CharacterType() {
 				
 				@Min(1)
 				private int length;
@@ -529,7 +562,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType BINARY_VARYING = new CharacterDataType() {
+			public static final DataType BINARY_VARYING = new CharacterType() {
 				
 				@Min(1)
 				private int length;
@@ -551,7 +584,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType BINARY_LARGE_OBJECT = new CharacterDataType() {//BLOB
+			public static final DataType BINARY_LARGE_OBJECT = new CharacterType() {//BLOB
 
 				public void set(int length) {
 					throw new NotImplementedException();
@@ -568,7 +601,7 @@ public class Table {
 			};
 			
 			@Deprecated//deleted from SQL:2003
-			public static final DataType BIT = new CharacterDataType() {
+			public static final DataType BIT = new CharacterType() {
 				
 				@Min(1)
 				private int length;
@@ -591,7 +624,7 @@ public class Table {
 			};
 			
 			@Deprecated//deleted from SQL:2003
-			public static final DataType BIT_VARYING = new CharacterDataType() {
+			public static final DataType BIT_VARYING = new CharacterType() {
 
 				@Min(1)
 				private int length;
@@ -616,7 +649,7 @@ public class Table {
 			
 		}
 		
-		public static interface NumeberDataType extends DataType {
+		public static interface NumericType extends DataType {
 			
 			int getPrecision();
 			
@@ -626,7 +659,7 @@ public class Table {
 			
 			void set(int precision, int scale);
 			
-			public static final DataType NUMERIC = new NumeberDataType() {
+			public static final DataType NUMERIC = new NumericType() {
 				
 				@Min(1)
 				private int precision;
@@ -661,7 +694,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType DECIMAL = new NumeberDataType() {
+			public static final DataType DECIMAL = new NumericType() {
 				
 				@Min(1)
 				private int precision;
@@ -696,7 +729,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType SMALLINT = new NumeberDataType() {
+			public static final DataType SMALLINT = new NumericType() {
 				
 				@Min(1)
 				private int precision;
@@ -726,7 +759,7 @@ public class Table {
 				
 			};
 
-			public static final DataType INTEGER = new NumeberDataType() {
+			public static final DataType INTEGER = new NumericType() {
 				
 				@Min(1)
 				private int precision;
@@ -757,7 +790,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType BIGINT = new NumeberDataType() {
+			public static final DataType BIGINT = new NumericType() {
 
 				@Min(1)
 				private int precision;
@@ -788,7 +821,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType FLOAT = new NumeberDataType() {
+			public static final DataType FLOAT = new NumericType() {
 
 				@Min(1)
 				private int precision;
@@ -819,7 +852,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType REAL = new NumeberDataType() {
+			public static final DataType REAL = new NumericType() {
 
 				@Min(1)
 				private int precision;
@@ -850,7 +883,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType DOUBLE_PRECISION = new NumeberDataType() {
+			public static final DataType DOUBLE_PRECISION = new NumericType() {
 
 				@Min(1)
 				private int precision;
@@ -881,13 +914,13 @@ public class Table {
 				
 			};
 		}	
-		public static interface EnumeratedDataType extends DataType {	
+		public static interface EnumeratedType extends DataType {	
 			
 			String[] names();
 			
 			void set(String...names);
 			
-			public static final DataType ENUMERATED = new EnumeratedDataType() {
+			public static final DataType ENUMERATED = new EnumeratedType() {
 				
 				private String[] names;
 				
@@ -910,7 +943,7 @@ public class Table {
 			};
 		}	
 		
-		public static interface DateTimeDataType extends DataType {	
+		public static interface DateTimeType extends DataType {	
 			
 			int get();
 			
@@ -924,7 +957,7 @@ public class Table {
 			
 			void set(int precision, int intervalClass, int fracionalPrecision);
 			
-			public static final DataType DATE = new DateTimeDataType() {
+			public static final DataType DATE = new DateTimeType() {
 				
 				public int get() {
 					throw new UnsupportedOperationException("[DATE] has no fractional seconds precision!");
@@ -956,7 +989,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType TIME = new DateTimeDataType() {
+			public static final DataType TIME = new DateTimeType() {
 				
 				private int precision;
 				
@@ -1000,7 +1033,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType TIMESTAMP = new DateTimeDataType() {
+			public static final DataType TIMESTAMP = new DateTimeType() {
 
 				private int precision;
 				
@@ -1044,7 +1077,7 @@ public class Table {
 				
 			};
 			
-			public static final DataType INTERVAL = new DateTimeDataType() {
+			public static final DataType INTERVAL = new DateTimeType() {
 				
 				private int precision = 2;
 				
@@ -1110,7 +1143,7 @@ public class Table {
 		/**
 		 * abstract data types: defined by a standard, by an implementation, or by an application
 		 */
-		public static interface UserDefinedDataType extends DataType {
+		public static interface UserDefinedType extends DataType {
 			//source(type,)
 		}
 		
@@ -1120,976 +1153,436 @@ public class Table {
 		 * @see https://dev.mysql.com/doc/refman/5.6/en/other-vendor-data-types.html
 		 *
 		 */
-		public static enum MySQLDataType implements CharacterDataType, NumeberDataType, EnumeratedDataType, DateTimeDataType, UserDefinedDataType {
-			TINYINT {//synonyms for BIT(8)
-				
-				private int m = 1;
-				
-				private boolean unsigned = false;
-				
-				private boolean zerofill = false;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return m;
-				}
-				
+		public static class MySQLDataType implements CharacterType, NumericType, EnumeratedType, DateTimeType, UserDefinedType {
+			
+			static final Map<String, Class<? extends DataType>> types;
+			
+			private String dataType;
+			
+			private Integer precision;
+			
+			/**
+			 * In MySQL m precision, d scale like NUMERIC(5,2) max is 999.99
+			 */
+			private Integer scale;
+			
+			private boolean unsigned;
+			
+			private boolean zerofill;
+			
+			private String[] names;
+			
+			/**
+			 * MySQL converts TIMESTAMP values from the current time zone to UTC for storage, and back from UTC to the current time zone for retrieval
+			 */
+			@SuppressWarnings("unused")
+			private boolean withTimeZone;
+			
+			static {
+				types = new HashMap<String, Class<? extends DataType>>();
 				/**
-				 * @param m the number of bits per value, if m > 1, value also cannot exceed 128 or 255(unsigned)
+				 * <li>Numeric Types</li>
 				 */
-				public void set(int m) {
-					set(m, false, false);
-				}
-				
-				public void set(int m, boolean unsigned, boolean zerofill) {
-					this.m = m;
-					this.unsigned = unsigned;
-					this.zerofill = zerofill;
-					init = true;
-				}
-				
-				public boolean isUnsigned() {
-					return unsigned;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(m).append(")");
-					if(unsigned)
-						sb.append(" UNSIGNED");
-					if(zerofill)
-						sb.append(" ZEROFILL");
-					return sb.toString();
-				}
-			},
-			SMALLINT {
-				private int m = 2;
-				
-				private boolean unsigned = false;
-				
-				private boolean zerofill = false;
-				
-				private boolean init = false;
-				
-				public void set(int m) {
-					set(m, false, false);
-				}
-				
-				public void set(int m, boolean unsigned, boolean zerofill) {
-					this.m = m;
-					this.unsigned = unsigned;
-					this.zerofill = zerofill;
-					init = true;
-				}
-				
-				public boolean isUnsigned() {
-					return unsigned;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(m).append(")");
-					if(unsigned)
-						sb.append(" UNSIGNED");
-					if(zerofill)
-						sb.append(" ZEROFILL");
-					return sb.toString();
-				}
-			},
-			MEDIUMINT {
-				
-				private int m = 3;
-				
-				private boolean unsigned = false;
-				
-				private boolean zerofill = false;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return m;
-				}
-				
-				public void set(int m) {
-					set(m, false, false);
-				}
-				
-				public void set(int m, boolean unsigned, boolean zerofill) {
-					this.m = m;
-					this.unsigned = unsigned;
-					this.zerofill = zerofill;
-					init = true;
-				}
-				
-				public boolean isUnsigned() {
-					return unsigned;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(m).append(")");
-					if(unsigned)
-						sb.append(" UNSIGNED");
-					if(zerofill)
-						sb.append(" ZEROFILL");
-					return sb.toString();
-				}
-			},
-			INT {//synonyms INTEGER
-				
-				private int m = 4;
-				
-				private boolean unsigned = false;
-				
-				private boolean zerofill = false;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return m;
-				}
-				
-				public void set(int m) {
-					set(m, false, false);
-				}
-				
-				public void set(int m, boolean unsigned, boolean zerofill) {
-					this.m = m;
-					this.unsigned = unsigned;
-					this.zerofill = zerofill;
-					init = true;
-				}
-				
-				public boolean isUnsigned() {
-					return unsigned;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(m).append(")");
-					if(unsigned)
-						sb.append(" UNSIGNED");
-					if(zerofill)
-						sb.append(" ZEROFILL");
-					return sb.toString();
-				}
-			},
-			BIGINT {
-
-				private int m = 8;
-				
-				private boolean unsigned = false;
-				
-				private boolean zerofill = false;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return m;
-				}
-				
-				public void set(int m) {
-					set(m, false, false);
-				}
-				
-				public void set(int m, boolean unsigned, boolean zerofill) {
-					this.m = m;
-					this.unsigned = unsigned;
-					this.zerofill = zerofill;
-					init = true;
-				}
-				
-				public boolean isUnsigned() {
-					return unsigned;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(m).append(")");
-					if(unsigned)
-						sb.append(" UNSIGNED");
-					if(zerofill)
-						sb.append(" ZEROFILL");
-					return sb.toString();
-				}
-			},
-			/**
-			 * <li>Fixed-Point Types (Exact Value)
-			 */
-			DECIMAL {
-				
-				private boolean init = false;
-				
-				private int m = 10;
-				
-				private int d;
-				
-				private boolean unsigned = false;
-				
-				private boolean zerofill = false;
-				
-				public int getPrecision() {
-					return m;
-				}
-				
-				public int getScale() {
-					return d;
-				}
-				
-				public void set(int precision) {
-					set(precision, 0);
-				}
-				
-				public void set(int precision, int scale) {
-					set(precision, scale, false, false);
-				}
-				
-				public void set(int precision, int scale, boolean unsigned, boolean zerofill) {
-					m = precision;
-					d = scale;
-					this.unsigned = unsigned;
-					this.zerofill = zerofill;
-					init = true;
-				}
-				
-				public boolean isUnsigned() {
-					return unsigned;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(m).append(",").append(d).append(")");
-					if(unsigned)
-						sb.append(" UNSIGNED");
-					if(zerofill)
-						sb.append(" ZEROFILL");
-					return sb.toString();
-				}
-			},
-			/**
-			 * <li>Floating-Point Types (Approximate Value)
-			 */
-			FLOAT{
-				
-				private int m;
-				
-				private int d;
-				
-				private boolean unsigned = false;
-				
-				private boolean zerofill = false;
-				
-				public int getPrecision() {
-					return m;
-				}
-				
-				public void set(int m) {//if m > 23, ddl column definition automatic change to double
-					set(m, 0);
-				}
-				
-				public int getScale() {
-					return d;
-				}
-				
-				public void set(int precision, int scale) {
-					set(precision, scale, false, false);
-				}
-				
-				public void set(@Min(1) @Max(23)int precision, int scale, boolean unsigned, boolean zerofill) {
-					assert precision >= scale;
-					m = precision;
-					d = scale;
-					this.unsigned = unsigned;
-					this.zerofill = zerofill;
-				}
-				
-				public boolean isUnsigned() {
-					return unsigned;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(m > 0)
-						sb.append("(").append(m).append(",").append(d).append(")");
-					if(unsigned)
-						sb.append(" UNSIGNED");
-					if(zerofill)
-						sb.append(" ZEROFILL");
-					return sb.toString();
-				}
-			},
-			DOUBLE {//synonyms REAL
-				
-				private int m;
-				
-				private int d;
-				
-				private boolean unsigned = false;
-				
-				private boolean zerofill = false;
-				
-				public int getPrecision() {
-					return m;
-				}
-				
-				public void set(int m) {
-					set(m, 0);
-				}
-				
-				public int getScale() {
-					return d;
-				}
-				
-				public void set(int m, int d) {
-					set(m, d, false, false);
-				}
-				
-				public void set(@Min(24) @Max(53)int precision, int scale, boolean unsigned, boolean zerofill) {
-					assert precision >= scale;
-					m = precision;
-					d = scale;
-					this.unsigned = unsigned;
-					this.zerofill = zerofill;
-				}
-				
-				public boolean isUnsigned() {
-					return unsigned;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(m > 0)
-						sb.append("(").append(m).append(",").append(d).append(")");
-					if(unsigned)
-						sb.append(" UNSIGNED");
-					if(zerofill)
-						sb.append(" ZEROFILL");
-					return sb.toString();
-				}
-			},
-			//DOUBLE_PRECISION,
+				//Integer Types(Extract Value)
+				types.put("TINYINT", NumericType.class);//synonyms for BIT(8), BOOL, BOOLEAN are synonyms for TINYINT(1), if precision > 1, value also cannot exceed 128 or 255(unsigned)
+				types.put("SMALLINT", NumericType.class);
+				types.put("MEDIUMINT", NumericType.class);
+				types.put("INT", NumericType.class);//synonyms INTEGER
+				types.put("BIGINT", NumericType.class);//SERIAL is an alias for BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE
+				//Fixed-Point Types (Exact Value)
+				types.put("DECIMAL", NumericType.class);
+				//Floating-Point Types (Approximate Value)
+				types.put("FLOAT", NumericType.class);// If the REAL_AS_FLOAT SQL mode is enabled, REAL is a synonym for FLOAT rather than DOUBLE
+				types.put("DOUBLE", NumericType.class);//synonyms REAL, DOUBLE PRECISION
+				//BIT-Value Type
+				types.put("BIT", NumericType.class);
+				/**
+				 * <li>Date and Time Types</li> if ALLOW_INVALID_DATES, a value is out of range or invalid, MySQL converts the value to the “zero” value 
+				 */
+				types.put("DATE", DateTimeType.class);////supported range is '1000-01-01' to '9999-12-31'
+				types.put("DATETIME", DateTimeType.class);////supported range is '1000-01-01 00:00:00' to '9999-12-31 23:59:59'
+				types.put("TIMESTAMP", DateTimeType.class);////range of '1970-01-01 00:00:01' UTC to '2038-01-19 03:14:07' UTC
+				types.put("YEAR", DateTimeType.class);
+				/**
+				 * <li>String Types</li>
+				 */
+				types.put("CHAR", CharacterType.class);
+				types.put("VARCHAR", CharacterType.class);
+				types.put("BINARY", CharacterType.class);
+				types.put("VARBINARY", CharacterType.class);
+				//Blob and Text Types
+				types.put("TINYBLOB", CharacterType.class);//8
+				types.put("BLOB", CharacterType.class);
+				types.put("MEDIUMBLOB", CharacterType.class);//24
+				types.put("LONGBLOB", CharacterType.class);//32
+				types.put("TINYTEXT", CharacterType.class);
+				types.put("TEXT", CharacterType.class);
+				types.put("MEDIUMTEXT", CharacterType.class);//LONG and LONG VARCHAR map to the MEDIUMTEXT
+				types.put("LONGTEXT", CharacterType.class);
+				//ENUM Type
+				types.put("ENUM", CharacterType.class);
+				//SET type
+				types.put("SET", CharacterType.class);
+				/**
+				 * <li>Spatial Data Types</li>
+				 */
+				types.put("GEOMETRY", UserDefinedType.class);
+				types.put("POINT", UserDefinedType.class);
+				types.put("LINESTRING", UserDefinedType.class);
+				types.put("POLYGON", UserDefinedType.class);
+				types.put("MULTIPOINT", UserDefinedType.class);
+				types.put("MULTILINESTRING", UserDefinedType.class);
+				types.put("MULTIPOLYGON", UserDefinedType.class);
+				types.put("GEOMETRYCOLLECTION", UserDefinedType.class);
+			}
 			
-			BIT {//b'111' --> 7
-				
-				private int m;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return m;
-				}
-				
-				public void set(@Min(1) @Max(64) int precision) {
-					m = precision;
-				}
-				
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(m).append(")");
-					return sb.toString();
-				}
-				
-			},
+			public MySQLDataType(String dataType) {
+				this.dataType = dataType.toUpperCase();
+				if(types.get(this.dataType) == null)
+					log.warn("no such jdbc type, DO NOT USE SYNONYM!");
+			}
 			
-			/**
-			 * <ul>Date and Time Types:</ul>if ALLOW_INVALID_DATES, a value is out of range or invalid, MySQL converts the value to the “zero” value 
-			 */
-			DATE,//supported range is '1000-01-01' to '9999-12-31'.
-			DATETIME{//supported range is '1000-01-01 00:00:00' to '9999-12-31 23:59:59'.
-				
-				private int fraction;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return fraction;
-				}
-				
-				public void set(@Max(6) int precision) {
-					this.fraction = precision;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(fraction).append(")");
-					return sb.toString();
-				}
-				
-			},
-			TIMESTAMP{//range of '1970-01-01 00:00:01' UTC to '2038-01-19 03:14:07' UTC.
-
-				private int fraction;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return fraction;
-				}
-				
-				public void set(@Max(6) int precision) {
-					this.fraction = precision;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(fraction).append(")");
-					return sb.toString();
-				}
-				
-			},
-			
-			TIME{
-
-				private int fraction;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return fraction;
-				}
-				
-				public void set(@Max(6) int precision) {
-					this.fraction = precision;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(fraction).append(")");
-					return sb.toString();
-				}
-			},
-			YEAR{
-				
-				private int digit = 4;//2 or 4
-				
-				private boolean init = false;
-				
-				public void set(@Pattern(regexp = "[2|4]") int m) {
-					digit = m;
-					init = true;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(digit).append(")");
-					return sb.toString();
-				}
-				
-			},
-			
-			/**
-			 * <ul>String Types:
-			 */
-			CHAR {
-				
-				private int length;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return length;
-				}
-				
-				public void set(@Min(0) @Max(255) int length) {
-					this.length = length;
-					init = true;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			},
-			VARCHAR {
-				
-				private int length;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return length;
-				}
-				
-				public void set(@Min(0) @Max(65535) int length) {
-					this.length = length;
-					init = true;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			},
-			
-			BINARY {
-				
-				private int length;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return length;
-				}
-				
-				public void set(@Min(0) @Max(255) int length) {
-					this.length = length;
-					init = true;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			},
-			VARBINARY {
-				
-				private int length;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return length;
-				}
-				
-				public void set(@Min(0) @Max(65535) int length) {
-					this.length = length;
-					init = true;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			},
-			/**
-			 * <li>Blob and Text Types
-			 */
-			 TINYBLOB, BLOB, MEDIUMBLOB, LONGBLOB,//8,,24,32
-			 TINYTEXT, TEXT, MEDIUMTEXT, LONGTEXT,//8,,24,32; LONG and LONG VARCHAR map to the MEDIUMTEXT
-			 
-			 /**
-			  * <li>ENUM Type
-			  */
-			 ENUM {
-				
-				private String[] names;
-				
-				public String[] names() {
-					return names;
-				}
-				
-				public void set(String...names) {
-					this.names = names;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(names != null && names.length > 0) {
-						sb.append("(");
-						for(int i = 0, j = names.length; i < j; i++) {
-							sb.append(names[i]);
-							if(i < j - 1)
-								sb.append(",");
-						}
-						sb.append(")");
-					}
-					return sb.toString();
-				}
-			},
-			 /**
-			  * <li>SET type
-			  */
-			 SET {
-				
-				private String[] names;
-				
-				public String[] names() {
-					return names;
-				}
-				
-				public void set(String...names) {
-					this.names = names;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(names != null && names.length > 0) {
-						sb.append("(");
-						for(int i = 0, j = names.length; i < j; i++) {
-							sb.append(names[i]);
-							if(i < j - 1)
-								sb.append(",");
-						}
-						sb.append(")");
-					}
-					return sb.toString();
-				}
-			},
-			 
-			 /**
-			  * <ul>Spatial Data Types
-			  */
-			 GEOMETRY,
-			 POINT,
-			 LINESTRING,
-			 POLYGON,
-			 
-			 MULTIPOINT,
-			 MULTILINESTRING,
-			 MULTIPOLYGON,
-			 GEOMETRYCOLLECTION,;
+			public String getDataType() {
+				return dataType;
+			}
 
 			public String toSQL() {
-				return super.toString();
+				StringBuilder sb = new StringBuilder(dataType);
+				if(precision != null || names != null) {
+					sb.append(" (");
+					if(precision != null) {
+						sb.append(precision.intValue());
+						if(scale != null)
+							sb.append(",").append(scale.intValue());
+					}
+					else {
+						for(String name : names)
+							sb.append(name).append(",");
+						sb.deleteCharAt(sb.length() - 1);
+					}
+					sb.append(")");
+				}
+				if(zerofill) sb.append(" UNSIGNED ZEROFILL");
+				return sb.toString();
 			}
 
 			public boolean withTimeZone() {
-				throw new UnsupportedOperationException();
+				if(types.get(dataType) != DateTimeType.class)
+					throw new UnsupportedOperationException("data type not support");
+				throw new UnsupportedOperationException("mysql not support");
 			}
 			
 			public void set(boolean withTimeZone) {
-				throw new UnsupportedOperationException();
+				if(types.get(dataType) != DateTimeType.class)
+					throw new UnsupportedOperationException("data type not support");
+				throw new UnsupportedOperationException("mysql not support");
 			}
 
 			public void set(int precision, boolean withTimeZone) {
-				throw new UnsupportedOperationException();
+				if(types.get(dataType) != DateTimeType.class)
+					throw new UnsupportedOperationException("data type not support");
+				throw new UnsupportedOperationException("mysql not support");
 			}
 
 			public void set(int precision, int intervalClass, int fracionalPrecision) {
-				throw new UnsupportedOperationException();
+				if(types.get(dataType) != DateTimeType.class)
+					throw new UnsupportedOperationException("data type not support");
+				throw new UnsupportedOperationException("mysql not support");
 			}
 			
 			public boolean isUnsigned() {
-				throw new AbstractMethodError();
+				if(types.get(dataType) != NumericType.class)
+					throw new UnsupportedOperationException("data type not support");
+				return unsigned;
 			}
 
 			public String[] names() {
-				throw new AbstractMethodError();
+				if(dataType.equals("SET") || dataType.equals("ENUM"))
+					return names;
+				else throw new UnsupportedOperationException("data type not support");
 			}
 
 			public void set(String... names) {
-				throw new AbstractMethodError();
+				if(dataType.equals("SET") || dataType.equals("ENUM"))
+					this.names = names;
+				else throw new UnsupportedOperationException("data type not support");
 			}
 
 			public int getPrecision() {
-				throw new AbstractMethodError();
+				if(precision != null) return precision.intValue();
+				else if(dataType.equals("DECIMAL")) return 10;
+				else if(dataType.equals("FLOAT")) return 23;
+				else if(dataType.equals("DOUBLE")) {
+					if(scale == null) return 53;
+					else return 255;
+				}
+				else throw new UnsupportedOperationException("data type not support");
 			}
 
 			public int getScale() {
-				throw new AbstractMethodError();
+				if(scale != null)
+					return scale.intValue();
+				if(log.isDebugEnabled()) log.debug("scale not set, use default");
+				if(dataType.equals("DECIMAL")) return 0;
+				else throw new UnsupportedOperationException("data type not support");
 			}
 
 			public void set(int precision, int scale) {
-				throw new AbstractMethodError();
+				set(precision, scale, false, false);
 			}
 
 			public int get() {
-				throw new AbstractMethodError();
+				if(precision != null)
+					return precision.intValue();
+				if(log.isDebugEnabled()) log.debug("length or fraction not set, use default[max] value");
+				if(dataType.equals("TINYINT")) return 1;
+				else if(dataType.equals("SMALLINT")) return 2;
+				else if(dataType.equals("MEDIUMINT")) return 3;
+				else if(dataType.equals("INT")) return 4;
+				else if(dataType.equals("BIGINT")) return 8;
+				else if(dataType.equals("CHAR") || dataType.equals("BINARY")) return 255;
+				else if(dataType.equals("VARCHAR") || dataType.equals("VARBINARY")) return 65535;
+				else if(dataType.equals("TIME") || dataType.equals("DATETIME") || dataType.equals("DATETIME"))
+						return 0;//differs from the standard SQL default of 6, for compatibility with previous MySQL versions.
+				else if(dataType.equals("YEAR")) return 4;
+				else throw new UnsupportedOperationException("data type not support");
 			}
 
-			public void set(int length) {
-				throw new AbstractMethodError();
+			public void set(@Min(0) @Max(65535) int length) {
+				if(types.get(dataType) == CharacterType.class) {
+					if(dataType.indexOf("BLOB") > 0 || dataType.indexOf("TEXT") > 0 || dataType.indexOf("ENUM") >= 0|| dataType.indexOf("SET") >= 0)
+						throw new UnsupportedOperationException("data type not support");
+					if((dataType.equals("CHAR") || dataType.equals("BINARY")) && length > 255)
+						log.error("length cannot exceed 255");
+					precision = Integer.valueOf(length);
+				}
+				else if(types.get(dataType) == NumericType.class) {
+					set(length, false, false);
+				}
+				else if(types.get(dataType) == DateTimeType.class) {
+					if(dataType.equals("DATE")) throw new UnsupportedOperationException("data type not support");
+					if(length > 6 || (dataType.equals("YEAR") && length != 2 && length != 4))
+						log.error("datetime fraction cannot be more than 6, type [year] accept 2 or 4");
+					this.precision = Integer.valueOf(length);
+				}
+				else throw new UnsupportedOperationException("data type not support");
 			}
 
-			public void set(int precision, boolean unsigned, boolean zerofill) {
-				throw new AbstractMethodError();
+			public void set(@Min(0) @Max(65) int precision, boolean unsigned, boolean zerofill) {
+				if(types.get(dataType) != NumericType.class)
+					throw new UnsupportedOperationException("data type not support");
+				if(dataType.equals("FLOAT") && precision > 24) {
+					log.warn("automatic change float to double when precision greater than 24");
+					dataType = "DOUBLE";
+				}
+				if((dataType.equals("TINYINT") && precision > 1) || (dataType.equals("SMALLINT") && precision > 2) || (dataType.equals("MEDIUMINT") && precision > 3)
+						|| (dataType.equals("INT") && precision > 4) || (dataType.equals("BIGINT") && precision > 8) || (dataType.equals("BIT") && precision > 64)
+						|| (dataType.equals("DOUBLE") && precision > 53))
+					log.warn("precision greater than maxium precision, value also cannot exceed");
+				this.precision = Integer.valueOf(precision);
+				this.zerofill = zerofill;
+				if(zerofill && !unsigned)
+					log.error("if you specify ZEROFILL for a numeric column, MySQL automatically adds the UNSIGNED attribute to the column");
+				if(zerofill) this.unsigned = true;
 			}
 			
-			public void set(int precision, int scale, boolean unsigned, boolean zerofill) {
-				throw new AbstractMethodError();
+			public void set(@Min(0) @Max(255) int precision, @Min(0) @Max(253) int scale, boolean unsigned, boolean zerofill) {
+				if(!dataType.equals("DECIMAL") && !dataType.equals("FLOAT") && !dataType.equals("DOUBLE"))
+					throw new UnsupportedOperationException("data type not support");
+				if(dataType.equals("DECIMAL") && precision + scale > 65)
+					log.error("too many digits");
+				if((dataType.equals("TINYINT") && precision > 1) || (dataType.equals("SMALLINT") && precision > 2) || (dataType.equals("MEDIUMINT") && precision > 3)
+						|| (dataType.equals("INT") && precision > 4) || (dataType.equals("BIGINT") && precision > 8) || (dataType.equals("BIT") && precision > 64)
+						|| (dataType.equals("DOUBLE") && precision > 53))
+					log.warn("precision greater than maxium precision, value also cannot exceed");
+				if(zerofill && !unsigned)
+					log.error("if you specify ZEROFILL for a numeric column, MySQL automatically adds the UNSIGNED attribute to the column");
+				this.precision = Integer.valueOf(precision);
+				this.scale = Integer.valueOf(scale);
+				this.zerofill = zerofill;
+				if(zerofill) this.unsigned = true;
 			}
 			
 		}
 		
 		/**
-		 * @see https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT313
+		 * @see http://docs.oracle.com/cd/B28359_01/server.111/b28286/sql_elements001.htm#SQLRF0021
 		 *
 		 */
-		public static enum OracleDataType implements CharacterDataType, NumeberDataType, DateTimeDataType, UserDefinedDataType {
-			CHAR{
-				
-				private int length = 1;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return length;
-				}
-				
-				public void set(@Min(1) @Max(2000) int length) {
-					this.length = length;
-					init = true;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			},
-			VARCHAR2{
-				
-				private int length = 1;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return length;
-				}
-				
-				public void set(@Min(1) @Max(4000) int length) {
-					this.length = length;
-					init = true;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			},
-			NCHAR{
-				
-				private int length = 1;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return length;
-				}
-				
-				public void set(@Min(1) @Max(2000) int length) {
-					this.length = length;
-					init = true;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			},
-			NVARCHAR2{
-				
-				private int length = 1;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return length;
-				}
-				
-				public void set(@Min(1) @Max(4000) int length) {
-					this.length = length;
-					init = true;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			},
+		public static class OracleDataType implements CharacterType, NumericType, DateTimeType, UserDefinedType {
 			
-			CLOB,
-			NCLOB,
-			@Deprecated LONG,//<2G, use CLOB or NCLOB instead!
+			static final Map<String, Class<? extends DataType>> types;
 			
-			NUMBER{
-				
-				private int precision;
-				
-				private int scale;//maybe negative
-				
-				public int getPrecision() {
-					return precision;
-				}
-				
-				
-				public void set(int length) {
-					set(length, 0);
-				}
-				
-				public int getScale() {
-					return scale;
-				}
-				
-				public void set(@Max(38) @Min(1) int precision, @Max(127) @Min(-84) int scale) {
-					if(precision + scale < 0 || scale > precision)
-						throw new IllegalArgumentException("Data Type [NUMBER] |scale| cannot exceed precision!");
-					this.precision = precision;
-					this.scale = scale;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(precision > 0)
-						sb.append("(").append(precision).append(",").append(scale).append(")");
-					return sb.toString();
-				}
-			},
-			BINARY_FLOAT,//approximate numeric datatypes
-			BINARY_DOUBLE,//approximate numeric datatypes
-			DATE,
-			TIMESTAMP{
-				
-				private int fraction;
-				
-				private boolean withTimeZone;
-				
-				public int get() {
-					return fraction;
-				}
-				
-				public void set(int fraction) {
-					this.fraction = fraction;
-				}
-				
-				public boolean withTimeZone() {
-					return withTimeZone;
-				}
-				
-				public void set(boolean withTimeZone) {
-					this.withTimeZone = withTimeZone;
-				}
-				
-				public void set(int fraction, boolean withTimeZone) {
-					this.fraction = fraction;
-					this.withTimeZone = withTimeZone;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(fraction > 0)
-						sb.append("(").append(fraction).append(")");
-					if(withTimeZone)
-						sb.append(" WITH TIME ZONE");//ignored TIMESTAMP WITH LOCAL TIME ZONE
-					return sb.toString();
-				}
-			},
-			INTERVAL {
-				
-				private int precision;
-				
-				private int fractionalSecondPrecision;
-				
-				private int intervalClass;
-				
-				private final int YEAR_TO_MONTH = 0/*, DAY_TO_SECOND = 3*/;
-				
-				public int get() {
-					return precision;
-				}
-
-				public void set(int intervalClass) {
-					this.intervalClass = intervalClass;
-					
-				}
-				
-				public boolean withTimeZone() {
-					throw new NotImplementedException();
-				}
-
-				public void set(int precision, boolean withTimeZone) {
-					throw new NotImplementedException();
-				}
-				
-				public void set(int precision, int intervalClass, int fracionalPrecision) {
-					this.precision = precision;
-					this.intervalClass = intervalClass;
-					this.fractionalSecondPrecision = fracionalPrecision;
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("INTERVAL ");
-					if(intervalClass == YEAR_TO_MONTH) 
-						sb.append("YEAR");
-					else sb.append("DAY");
-					if(precision > 0) 
-						sb.append(" (").append(precision).append(")");
-					sb.append(" TO ");
-					if(intervalClass == YEAR_TO_MONTH)
-						sb.append("MONTH");
-					else sb.append("SECOND");
-					if(fractionalSecondPrecision > 0)
-						sb.append(" (").append(fractionalSecondPrecision).append(")");
-					return sb.toString();
-				}
-			},
-			BLOB,//<128T
-			BFILE,//<4G, read only; stores unstructured binary data in operating-system files outside the database
-			@Deprecated RAW,//<2000bytes, can be indexed
-			@Deprecated LONG_RAW,//<2G, //cannot be indexed, use the BLOB or BFILE instead!
-			ROWID,//pseudocolumn 
-			UROWID,
-			XMLType,
-			UriType,
-			;
+			private static final int YEAR_TO_MONTH = 0, DAY_TO_SECOND = 3;
+			
+			private String dataType;
+			
+			private Integer precision;
+			
+			private Integer intervalClass;
+			
+			private Integer scale;
+			
+			private Boolean withTimeZone;
+			
+			static {
+				types = new HashMap<String, Class<? extends DataType>>();
+				/**
+				 * <li>Character Datatypes</li>
+				 */
+				types.put("CHAR", CharacterType.class);
+				types.put("VARCHAR2", CharacterType.class);
+				types.put("NCHAR", CharacterType.class);
+				types.put("NVARCHAR2", CharacterType.class);
+				/**
+				 * <li>Long and RAW Datatypes</li>
+				 */
+				types.put("LONG", CharacterType.class);//<2G, use CLOB or NCLOB instead!
+				types.put("RAW", CharacterType.class);//<2000bytes, can be indexed
+				types.put("LONG RAW", CharacterType.class);//<2G, cannot be indexed, use the BLOB or BFILE instead!
+				/**
+				 * <li>Large Object Datatypes</li>
+				 */
+				types.put("CLOB", CharacterType.class);
+				types.put("NCLOB", CharacterType.class);
+				types.put("BLOB", CharacterType.class);//<128T
+				types.put("BFILE", CharacterType.class);//<4G, read only; stores unstructured binary data in operating-system files outside the database
+				/**
+				 * <li>Number Datatypes</li>
+				 */
+				types.put("NUMBER", NumericType.class);//FLOAT[(p)] A subtype of the NUMBER datatype having precision p
+				types.put("BINARY_FLOAT", NumericType.class);//approximate numeric datatypes
+				types.put("BINARY_DOUBLE", NumericType.class);//approximate numeric datatypes
+				/**
+				 * <li>Date Time Datatypes</li>
+				 */
+				types.put("DATE", DateTimeType.class);
+				types.put("TIMESTAMP", DateTimeType.class);//ignored TIMESTAMP WITH LOCAL TIME ZONE
+				types.put("INTERVAL", DateTimeType.class);
+				/**
+				 * <li>ROWID Datatyppes</li>
+				 */
+				types.put("ROWID", UserDefinedType.class);
+				types.put("UROWID", UserDefinedType.class);
+				/**
+				 * <li>Oracle-Supplied Types</li>
+				 */
+				//Any Types
+				types.put("ANYTYPE", UserDefinedType.class);
+				types.put("ANYDATA", UserDefinedType.class);
+				types.put("ANYDATASET", UserDefinedType.class);
+				//XML Types
+				types.put("XMLType", UserDefinedType.class);
+				types.put("URIType", UserDefinedType.class);//subtypes: DBURIType, XDBURIType, HTTPURIType
+				//Spatial Types
+				types.put("SDO_GEOMETRY", UserDefinedType.class);
+				types.put("SDO_TOPO_GEOMETRY", UserDefinedType.class);
+				types.put("SDO_GEORASTER", UserDefinedType.class);
+				//Media Types: ORDAudio, ORDImage, ORDVideo, ORDDoc, ORDDicom, SI_StillImage, SI_Color, SI_AverageColor, SI_ColorHistogram, SI_PositionalColor, SI_Texture, SI_FeatureList, ORDImageSignature
+			}
+			
+			public OracleDataType(String dataType) {
+				this.dataType = dataType.toUpperCase();
+				if(types.get(this.dataType) == null)
+					log.warn("no such jdbc type, DO NOT USE SYNONYM!");
+			}
+			
+			public String getDataType() {
+				return dataType;
+			}
 
 			public String toSQL() {
-				return super.toString().replace("_", " ");
+				StringBuilder sb = new StringBuilder(dataType);
+				if(intervalClass != null) {
+					if(intervalClass.intValue() == YEAR_TO_MONTH)  sb.append(" YEAR");
+					else sb.append(" DAY");
+					if(precision != null) sb.append("(").append(precision.intValue()).append(")");
+					sb.append(" TO");
+					if(intervalClass.intValue() == YEAR_TO_MONTH)  sb.append(" MONTH");
+					else sb.append(" SECOND");
+					if(scale != null) sb.append("(").append(scale.intValue()).append(")");
+				} else {
+					if(precision != null) sb.append(" (").append(precision.intValue());
+					if(scale != null) sb.append(",").append(scale.intValue());
+					sb.append(")");
+					if(withTimeZone != null && withTimeZone) sb.append(" WITH TIME ZONE");
+				}
+				return sb.toString();
 			}
 
 			public boolean withTimeZone() {
-				throw new AbstractMethodError();
+				if(!dataType.equals("TIMESTAMP")) throw new UnsupportedOperationException("data type not support");
+				else if(withTimeZone != null) return withTimeZone.booleanValue();
+				else {
+					if(log.isDebugEnabled()) log.debug("WITH[OUT] TIME ZONE not set, use default");
+					return true;
+				}
 			}
 			
 			public void set(boolean withTimeZone) {
-				throw new AbstractMethodError();
+				if(!dataType.equals("TIMESTAMP")) throw new UnsupportedOperationException("data type not support");
+				this.withTimeZone = Boolean.valueOf(withTimeZone);
 			}
 
-			public void set(int precision, boolean withTimeZone) {
-				throw new AbstractMethodError();
+			public void set(@Min(0) @Max(9) int precision, boolean withTimeZone) {
+				if(!dataType.equals("TIMESTAMP")) throw new UnsupportedOperationException("data type not support");
+				this.precision = Integer.valueOf(precision);
+				this.withTimeZone = Boolean.valueOf(withTimeZone);
 			}
 
-			public void set(int precision, int intervalClass, int fracionalPrecision) {
-				throw new UnsupportedOperationException();
+			public void set(@Min(0) @Max(9) int precision, int intervalClass, @Min(0) @Max(9) int fracionalPrecision) {
+				if(!dataType.equals("INTERVAL")) throw new UnsupportedOperationException("data type not support");
+				if(intervalClass != YEAR_TO_MONTH && intervalClass != DAY_TO_SECOND)
+					log.error("oracle has no such interval");
+				this.precision = Integer.valueOf(precision);
+				if(intervalClass == DAY_TO_SECOND)
+					this.scale = Integer.valueOf(fracionalPrecision);
 				
 			}
 
 			public int getPrecision() {
-				throw new AbstractMethodError();
+				if(precision != null) return precision.intValue();
+				if(log.isDebugEnabled()) log.debug("precision not set, use default value");
+				if(dataType.equals("NUMBER")) return 38;//max
+				else if(dataType.equals("INTERVAL")) return 2;
+				else throw new UnsupportedOperationException("data type not support");
 			}
 
 			public int getScale() {
-				throw new AbstractMethodError();
+				if(scale != null) return scale.intValue();
+				if(log.isDebugEnabled()) log.debug("scale not set, use default value");
+				if(dataType.equals("NUMBER")) return 0;
+				else if(intervalClass != null && intervalClass == DAY_TO_SECOND) return 6;
+				else throw new UnsupportedOperationException("data type not support");
 			}
 
-			public void set(int precision, int scale) {
-				throw new AbstractMethodError();
+			public void set(@Min(1) @Max(38) int precision, @Min(-84) @Max(127) int scale) {
+				if(!dataType.equals("NUMBER")) throw new UnsupportedOperationException("data type not support");
+				this.precision = Integer.valueOf(precision);
+				this.scale = Integer.valueOf(scale);
 			}
 
 			public int get() {
-				throw new AbstractMethodError();
+				if(precision != null) return precision.intValue();
+				if(log.isDebugEnabled()) log.debug("length not set, use default value");
+				if(dataType.equals("CHAR") || dataType.equals("NCHAR")) return 1;
+				else if(dataType.equals("TIMESTAMP")) return 6;
+				else if(dataType.equals("UROWID") || dataType.equals("NVARCHAR2") || dataType.equals("VARCHAR2")) return 4000;//must specify size
+				else if(dataType.equals("RAW")) return 2000;//must specify size for a RAW value!
+				else throw new UnsupportedOperationException("data type not support");
 			}
 
-			public void set(int length) {
-				throw new AbstractMethodError();
+			public void set(@Min(0) @Max(4000) int length) {
+				if(!dataType.equals("CHAR") && !dataType.equals("NCHAR") && !dataType.equals("NVARCHAR2") && !dataType.equals("VARCHAR2")
+						&& !dataType.equals("UROWID") && !dataType.equals("TIMESTAMP") && !dataType.equals("RAW") && !dataType.equals("NUMBER"))
+					throw new UnsupportedOperationException("data type not support");
+				if((dataType.equals("CHAR") || dataType.equals("NCHAR") || dataType.equals("RAW")) && length > 2000)
+					log.error("length is too big");
+				else if(dataType.equals("TIMESTAMP") && length > 9)
+					log.error("length is too big");
+				precision = Integer.valueOf(length);
+				if(dataType.equals("NUMBER"))
+					set(length, 0);
 			}
 
 		}
@@ -2098,449 +1591,289 @@ public class Table {
 		 * @see http://www.postgresql.org/docs/9.5/interactive/datatype.html
 		 *
 		 */
-		public static enum PostgresDataType implements CharacterDataType, NumeberDataType, EnumeratedDataType, DateTimeDataType, UserDefinedDataType {
-			/**
-			 * Numeric Types
-			 */
-			SMALLINT,//alias INT2
-			INTEGER,//alias INT or INT4
-			BIGINT,//alias int8
-			NUMERIC {//alias DECIMAL
-				
-				private int precision;
-				
-				private int scale;
-				
-				public int getPrecision() {
-					return precision;
-				}
-				
-				public void set(int precision) {
-					set(precision, 0);
-				}
-				
-				public int getScale() {
-					return scale;
-				}
-				
-				public void set(@Max(1000) int precision, int scale) {
-					this.precision = precision;
-					this.scale =scale;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(precision > 0)
-						sb.append("(").append(precision).append(",").append(scale).append(")");
-					return sb.toString();
-				}
-			},
-			REAL,//alias FLOAT4, FLOAT(p) 1=<p<=24
-			DOUBLE_PRECISION,//alias FLOAT8, FLOAT(p) 25=<p<=53
-			SMALLSERIAL,//alias SERIAL2
-			SERIAL,//alias SERIAL4
-			BIGSERIAL,//alias SERIAL8
-			
-			/**
-			 * Monetary Types
-			 */
-			MONEY,
-			
-			/**
-			 * Character Types
-			 */
-			CHARACTER {//alias CHAR
-				
-				private int length = 1;
-				
-				private boolean init = true;
-				
-				public int get() {
-					return length;
-				}
-				
-				public void set(@Min(1) int length) {
-					this.length = length;
-					init = true;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			},
-			CHARACTER_VARING {//alias VARCHAR
+		public static class PostgresDataType implements CharacterType, NumericType, EnumeratedType, DateTimeType, UserDefinedType {
 
-				private int length;
-				
-				public int get() {
-					return length;
-				}
-				
-				public void set(int length) {
-					this.length = length;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(length > 0)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			},
-			TEXT,
+			static final Map<String, Class<? extends DataType>> types;
 			
-			/**
-			 * Binary Data Types
-			 */
-			BYTEA,
+			private String dataType;
 			
-			/**
-			 * Date/Time Types
-			 */
-			DATE,
-			TIME {//alias TIMETZ
-				
-				private int precision;
-				
-				private boolean withTimeZone;
-				
-				private Boolean init = null;
-				
-				public int get() {
-					return precision;
-				}
-				
-				public void set(@Min(0) @Max(6) int precision) {
-					this.precision = precision;
-					init = Boolean.FALSE;
-				}
-				
-				public boolean withTimeZone() {
-					return withTimeZone;
-				}
-				
-				public void set(boolean withTimeZone) {
-					this.withTimeZone = withTimeZone;
-				}
-				
-				public void set(@Min(0) @Max(10) int precision, boolean withTimeZone) {
-					this.precision = precision;
-					this.withTimeZone = withTimeZone;
-					init = Boolean.TRUE;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init != null) {
-						sb.append(" (").append(precision).append(")");
-						if(init) {
-							sb.append(" WITH");
-							if(!withTimeZone)
-								sb.append("OUT");
-							sb.append(" TIME ZONE");
-						}	
-					}
-					return sb.toString();
-				}
-			},
-			TIMESTAMP {//alias TIMESTAMPTZ
-				
-				private int precision;
-				
-				private boolean withTimeZone;
-				
-				private Boolean init = null;
-				
-				public int get() {
-					return precision;
-				}
-				
-				public void set(@Min(0) @Max(6) int precision) {
-					this.precision = precision;
-					init = Boolean.FALSE;
-				}
-				
-				public boolean withTimeZone() {
-					return withTimeZone;
-				}
-				
-				public void set(boolean withTimeZone) {
-					this.withTimeZone = withTimeZone;
-				}
-				
-				public void set(@Min(0) @Max(6) int precision, boolean withTimeZone) {
-					this.precision = precision;
-					this.withTimeZone = withTimeZone;
-					init = Boolean.TRUE;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init != null) {
-						sb.append(" (").append(precision).append(")");
-						if(init) {
-							sb.append(" WITH");
-							if(!withTimeZone)
-								sb.append("OUT");
-							sb.append(" TIME ZONE");
-						}	
-					}
-					return sb.toString();
-				}
-			},
-			INTERVAL {//XXX pgAdmin: interval year to month --auto translate --> "interval year to month"(65535), but exec this create script will fail
-				private int intervalClass;
-				
-				private int length;
-				
-				private final int YEAR_TO_MONTH = 0, DAY_TO_HOUR = 1, DAY_TO_MINUTE = 2, DAY_TO_SECOND = 3, HOUR_TO_MINUTE = 4, HOUR_TO_SECOND = 5, MINUTE_TO_SECOND = 6;
-				
-				public int get() {
-					return length;
-				}
-
-				public void set(int intervalClass) {
-					this.intervalClass = intervalClass;
-					
-				}
-				
-				public boolean withTimeZone() {
-					throw new NotImplementedException();
-				}
-
-				public void set(int precision, boolean withTimeZone) {
-					throw new NotImplementedException();
-				}
-				
-				public void set(int length, int intervalClass, int fracionalPrecision) {
-					this.length = length;
-					this.intervalClass = intervalClass;
-				}
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder("INTERVAL ");
-					switch (intervalClass) {
-					case YEAR_TO_MONTH:
-						sb.append("YEAR TO MONTH");
-						break;
-					case DAY_TO_HOUR:
-						sb.append("DAY TO HOUR");
-						break;
-					case DAY_TO_MINUTE:
-						sb.append("DAY TO MINUTE");
-						break;
-					case DAY_TO_SECOND:
-						sb.append("DAY TO SECOND");
-						break;
-					case HOUR_TO_MINUTE:
-						sb.append("HOUR TO MINUTE");
-						break;
-					case HOUR_TO_SECOND:
-						sb.append("HOUR TO SECOND");
-						break;
-					case MINUTE_TO_SECOND:
-						sb.append("MINUTE TO SECOND");
-						break;
-					default:
-						throw new IllegalArgumentException();
-					}
-					return sb.toString();
-				}
-			},
+			private Integer precision;
 			
-			/**
-			 * Boolean Type
-			 */
-			BOOLEAN,//alias BOOL: true, false, unknow
+			private Integer intervalClass;
 			
-			/**
-			 * Enumerated Types
-			 */
-			ENUM {//create type name as ENUM(strings...)
-				
-				private String[] names;
-				
-				public String[] names() {
-					return names;
-				}
-
-				public void set(String... names) {
-					this.names = names;
-				}
-			},
+			private final int YEAR_TO_MONTH = 0, DAY_TO_HOUR = 1, DAY_TO_MINUTE = 2, DAY_TO_SECOND = 3, HOUR_TO_MINUTE = 4, HOUR_TO_SECOND = 5, MINUTE_TO_SECOND = 6;
 			
-			/**
-			 * Geometric Types
-			 */
-			POINT,//(x, y)
-			LINE,//{A,B,C}
-			LSEG,//((x1,y1),(x2,y2))
-			BOX,//((x1,y1),(x2,y2))
-			PATH,//close path: ((x1,y1),...) or open path: [(x1,y1),...]
-			POLYGON,//((x1,y1),...)
-			CIRCLE,//<(x,y),r>
+			private Integer scale;
 			
-			/**
-			 * Network Address Types
-			 */
-			CIDR,
-			INET,
-			MACADDR,
+			private Boolean withTimeZone;
 			
-			/**
-			 * Bit String Types
-			 */
-			BIT {
-				
-				private int length = 1;
-				
-				private boolean init = false;
-				
-				public int get() {
-					return length;
-				}
-				
-				public void set(int length) {
-					this.length = length;
-					init = true;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(init)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			},
-			BIT_VARING {//alias VARBIT
-				
-				private int length;
-				
-				public int get() {
-					return length;
-				}
-				
-				public void set(int length) {
-					this.length = length;
-				}
-				
-				@Override public String toSQL() {
-					StringBuilder sb = new StringBuilder(super.toSQL());
-					if(length > 0)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			},
+			private String[] names;
 			
-			/**
-			 * Text Search Types
-			 */
-			TSQUERY,
-			TSVECTOR,
+			static {
+				types = new HashMap<String, Class<? extends DataType>>();
+				/**
+				 * <li>Numeric Types</li>
+				 */
+				types.put("SMALLINT", NumericType.class);//alias INT2
+				types.put("INTEGER", NumericType.class);//alias INT or INT4
+				types.put("BIGINT", NumericType.class);//alias INT8
+				types.put("NUMERIC", NumericType.class);//alias DECIMAL
+				types.put("REAL", NumericType.class);//alias FLOAT4, FLOAT(p) 1=<p<=24
+				types.put("DOUBLE PRECISION", NumericType.class);//alias FLOAT8, FLOAT(p) 25=<p<=53
+				types.put("SMALLSERIAL", NumericType.class);//alias SERIAL2
+				types.put("SERIAL", NumericType.class);//alias SERIAL4
+				types.put("BIGSERIAL", NumericType.class);//alias SERIAL8
+				/**
+				 * <li>Monetary Types</li>
+				 */
+				types.put("MONEY", UserDefinedType.class);
+				/**
+				 * <li>Character Types</li>
+				 */
+				types.put("CHARACTER", CharacterType.class);//alias CHAR
+				types.put("CHARACTER VARING", CharacterType.class);//alias VARCHAR
+				types.put("TEXT", CharacterType.class);
+				/**
+				 * <li>Binary Data Types</li>
+				 */
+				types.put("BYTEA", CharacterType.class);
+				/**
+				 * Date/Time Types
+				 */
+				types.put("DATE", DateTimeType.class);
+				types.put("TIME", DateTimeType.class);//alias TIMETZ
+				types.put("TIMESTAMP", DateTimeType.class);//alias TIMESTAMPTZ
+				types.put("INTERVAL", DateTimeType.class);
+				/**
+				 * <li>Boolean Type</li>
+				 */
+				types.put("BOOLEAN", DataType.class);//alias BOOL: true, false, unknow
+				/**
+				 * <li>Enumerated Types</li>
+				 */
+				types.put("ENUM", EnumeratedType.class);//create type name as ENUM(strings...)
+				/**
+				 * <li>Geometric Types</li>
+				 */
+				types.put("POINT", UserDefinedType.class);//(x, y)
+				types.put("LINE", UserDefinedType.class);//{A,B,C}
+				types.put("LSEG", UserDefinedType.class);//((x1,y1),(x2,y2))
+				types.put("BOX", UserDefinedType.class);//((x1,y1),(x2,y2))
+				types.put("PATH", UserDefinedType.class);//close path: ((x1,y1),...) or open path: [(x1,y1),...]
+				types.put("POLYGON", UserDefinedType.class);//((x1,y1),...)
+				types.put("CIRCLE", UserDefinedType.class);//<(x,y),r>
+				/**
+				 * <li>Network Address Types</li>
+				 */
+				types.put("CIDR", UserDefinedType.class);
+				types.put("INET", UserDefinedType.class);
+				types.put("MACADDR", UserDefinedType.class);
+				/**
+				 * <li>Bit String Types</li>
+				 */
+				types.put("BIT", CharacterType.class);
+				types.put("BIT VARING", CharacterType.class);
+				/**
+				 * <li>Text Search Types</li>
+				 */
+				types.put("TSQUERY", UserDefinedType.class);
+				types.put("TSVECTOR", UserDefinedType.class);
+				/**
+				 * <li>UUID Type</li>
+				 */
+				types.put("UUID", UserDefinedType.class);
+				/**
+				 * <li>XML Type</li>
+				 */
+				types.put("XML", UserDefinedType.class);
+				/**
+				 * <li>JSON Types</li>
+				 */
+				types.put("JSON", UserDefinedType.class);
+				types.put("JSONB", UserDefinedType.class);
+				/**
+				 * <li>Arrays</li>
+				 */
+				types.put("ARRAY", UserDefinedType.class);//Arrays: TEXT[][], INTEGER[][], ...
+				/**
+				 * <li>Composite Types</li>CREATE TYPE name AS {col type}
+				 */
+				/**
+				 * <li>Range Types</li>
+				 */
+				types.put("INT4RANGE", UserDefinedType.class);
+				types.put("INT8RANGE", UserDefinedType.class);
+				types.put("NUMRANGE", UserDefinedType.class);
+				types.put("TSRANGE", UserDefinedType.class);
+				types.put("TSTZRANGE", UserDefinedType.class);
+				types.put("DATERANGE", UserDefinedType.class);
+				/**
+				 * <li>Object Identifier Types</li>
+				 */
+				types.put("OID", UserDefinedType.class);//alias as regproc, regprocedure, regoper, regoperator, regclass, regtype, regrole, regnamespace, regconfig, or regdictionary
+				/**
+				 * <li>pg_lsn Type</li>
+				 */
+				types.put("PG_SLN", UserDefinedType.class);
+				/**
+				 * <li>Pseudo-Types</li>any, anyelement, anyarray, anynonarray, anyenum, 
+				 * anyrange, cstring, internal, language_handler, fdw_handler, tsm_handler,
+				 * record, trigger, event_trigger, pg_ddl_command, void, opaque
+				 */
+			}
 			
-			UUID,
+			public PostgresDataType(String dataType) {
+				this.dataType = dataType.toUpperCase();
+				if(types.get(this.dataType) == null)
+					log.warn("no such jdbc type, DO NOT USE SYNONYM!");
+			}
 			
-			XML,
-			
-			JSON,
-			JSONB,
-			
-			//Arrays: TEXT[][], INTEGER[][], ...
-			ARRAY {
-				private String[] names;
-				
-				private int dimension;
-				
-				public String[] names() {
-					return names;
-				}
-				
-				public int get() {
-					return dimension;
-				}
-
-				public void set(@Size(max = 1, min = 1) String... names) {
-					this.names = names;
-				}
-				
-				public void set(@Min(1) int dimension) {
-					this.dimension = dimension;
-				}
-				
-				@Override
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder();
-					sb.append(PostgresDataType.valueOf(names[0]).toSQL());
-					for(int i = 0; i < dimension; i++)
-						sb.append("[]");
-					return sb.toString();
-				}
-			},
-			
-			//Composite Types: CREATE TYPE name AS {col type}
-			
-			//Range Types: INT4RANGE, INT8RANGE, NUMRANGE, TSRANGE, DATERANGE
-			
-			//Object Identifier Types: oid alias as regproc, regprocedure, regoper, regoperator, regclass, regtype, regrole, regnamespace, regconfig, or regdictionary
-			OID,
-			
-			PG_SLN {
-				@Override public String toSQL() {
-					return "PG_SLN";
-				}
-			},
-			
-			//Pseudo-Types: cannot be used as a column data type
-			;
+			public String getDataType() {
+				return dataType;
+			}
 
 			public String toSQL() {
-				return super.toString().replace("_", " ");
+				StringBuilder sb = new StringBuilder();
+				if(dataType.equals("ARRAY")) {
+					sb.append(names[0]);
+					for(int i = 0; i < precision.intValue(); i++)
+						sb.append("[]");
+				} else {
+					sb.append(dataType);
+					if(intervalClass != null) {
+						switch (intervalClass.intValue()) {
+						case YEAR_TO_MONTH:
+							sb.append(" YEAR TO MONTH");
+							break;
+						case DAY_TO_HOUR:
+							sb.append(" DAY TO HOUR");
+							break;
+						case DAY_TO_MINUTE:
+							sb.append(" DAY TO MINUTE");
+							break;
+						case DAY_TO_SECOND:
+							sb.append(" DAY TO SECOND");
+							break;
+						case HOUR_TO_MINUTE:
+							sb.append(" HOUR TO MINUTE");
+							break;
+						case HOUR_TO_SECOND:
+							sb.append(" HOUR TO SECOND");
+							break;
+						case MINUTE_TO_SECOND:
+							sb.append(" MINUTE TO SECOND");
+							break;
+						default:
+						}	
+					}
+					if(precision != null) {
+						sb.append("(").append(precision.intValue());
+						if(scale != null) sb.append(",").append(scale.intValue());
+						sb.append(")");
+					}
+					if(withTimeZone != null) {
+						sb.append(" WITH");
+						if(!withTimeZone.booleanValue()) sb.append("OUT");
+						sb.append(" TIME ZONE");
+					}
+					if(names != null) {
+						sb.append("(");
+						for(int i = 0; i < names.length; i++) {
+							sb.append(names[i]);
+							if(i < names.length - 1)
+								sb.append(",");
+						}
+						sb.append(")");
+					}
+				}
+				return sb.toString();
 			}
 
 			public boolean withTimeZone() {
-				throw new AbstractMethodError();
+				if(withTimeZone != null) return withTimeZone.booleanValue();
+				if(log.isDebugEnabled()) log.debug("WITH TIME ZONE not set, use default");
+				if(dataType.equals("TIME") || dataType.equals("TIMESTAMP")) return false;
+				else throw new UnsupportedOperationException("data type not support");
 			}
 			
 			public void set(boolean withTimeZone) {
-				throw new AbstractMethodError();
+				if(!dataType.equals("TIME") && !dataType.equals("TIMESTAMP"))
+					throw new UnsupportedOperationException("data type not support");
+				this.withTimeZone = Boolean.valueOf(withTimeZone);
 			}
 
-			public void set(int precision, boolean withTimeZone) {
-				throw new AbstractMethodError();
+			public void set(@Min(0) @Max(6) int precision, boolean withTimeZone) {
+				if(!dataType.equals("TIME") && !dataType.equals("TIMESTAMP"))
+					throw new UnsupportedOperationException("data type not support");
+				this.precision = Integer.valueOf(precision);
+				this.withTimeZone = Boolean.valueOf(withTimeZone);
 			}
 
-			public void set(int precision, int intervalClass, int fracionalPrecision) {
-				throw new AbstractMethodError();
+			public void set(@Min(0) @Max(6) int precision, int intervalClass, int fracionalPrecision) {
+				if(!dataType.equals("INTERVAL"))
+					throw new UnsupportedOperationException("data type not support");
+				if(intervalClass > MINUTE_TO_SECOND)
+					log.error("no such interval data type");
+				this.precision = Integer.valueOf(precision);
+				//XXX pgAdmin: interval year to month --auto translate --> "interval year to month"(65535), but exec this create script will fail
 			}
 
 			public int getPrecision() {
-				throw new AbstractMethodError();
+				if(precision != null) return precision.intValue();
+				if(log.isDebugEnabled()) log.debug("precision not set, use default");
+				if(dataType.equals("NUMERIC")) return 1000;//values of any precision and scale
+				else throw new UnsupportedOperationException("data type not support");
 			}
 
 			public int getScale() {
-				throw new AbstractMethodError();
+				if(scale != null) return scale.intValue();
+				if(dataType.equals("NUMERIC")) return 1000;//values of any precision and scale
+				else throw new UnsupportedOperationException("data type not support");
 			}
 
-			public void set(int precision, int scale) {
-				throw new AbstractMethodError();
+			public void set(@Min(1) @Max(1000) int precision, @Min(0) @Max(1000) int scale) {
+				if(!dataType.equals("NUMERIC"))
+					throw new UnsupportedOperationException("data type not support");
+				this.precision = Integer.valueOf(precision);
+				this.scale = Integer.valueOf(scale);
 			}
 
 			public int get() {
-				throw new AbstractMethodError();
+				if(precision != null) return precision.intValue();
+				if(log.isDebugEnabled()) log.debug("precision or length not set, use default or max");
+				if(dataType.equals("CHARACTER") || dataType.equals("BIT")) return 1;
+				else if(dataType.equals("CHARACTER VARING") || dataType.equals("BIT VARING")) return Integer.MAX_VALUE;//without length specifier accepts strings of any size
+				else if(dataType.equals("TIME") || dataType.equals("TIMESTAMP")) return 6;//no explicit bound on precision
+				else throw new UnsupportedOperationException("data type not support");
 			}
 
-			public void set(int length) {
-				throw new AbstractMethodError();
+			public void set(@Min(0) int length) {
+				if(!dataType.equals("BIT") && !dataType.equals("BIT VARING")
+						&& !dataType.equals("CHARACTER") && !dataType.equals("CHARACTER VARING")
+						&& !dataType.equals("INTERVAL") && !dataType.equals("NUMERIC")
+						&& !dataType.equals("TIME") && !dataType.equals("TIMESTAMP")
+						&& !dataType.equals("ARRAY"))
+					throw new UnsupportedOperationException("data type not support");
+				if((dataType.equals("ARRAY") || dataType.equals("BIT") || dataType.equals("BIT VARING")
+						|| dataType.equals("CHARACTER") || dataType.equals("CHARACTER VARING")) 
+						&& length < 1)
+					log.error("length must greater than 1");
+				this.precision = Integer.valueOf(length);
 			}
 
 			public String[] names() {
-				throw new AbstractMethodError();
+				if(names != null) return names;
+				if(!dataType.equals("ENUM"))
+					throw new UnsupportedOperationException("data type not support");
+				else return null;
 			}
 
 			public void set(String... names) {
-				throw new AbstractMethodError();
+				if(!dataType.equals("ENUM") && !dataType.equals("ARRAY"))
+					throw new UnsupportedOperationException("data type not support");
+				if(dataType.equals("ARRAY") && names.length != 1)
+					log.error("ARRAY is single type");
+				this.names = names;
 			}
 			
 		}

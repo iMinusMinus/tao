@@ -53,7 +53,7 @@ public class SQLParserTest {
 			Assert.assertEquals("EMP", table.getName());
 			Assert.assertEquals(8, table.getColumns().size());
 			Assert.assertFalse(table.getColumns().get(0).isNullable());
-			Assert.assertEquals(2, ((Table.Column.OracleDataType) table.getColumns().get(7).getDataType()).getPrecision());
+			Assert.assertEquals(10, ((Table.Column.OracleDataType) table.getColumns().get(1).getDataType()).get());
 			Assert.assertEquals("deptno", table.getColumns().get(7).getName());
 			Assert.assertNotNull(table.getFks());
 		} catch (FileNotFoundException e) {
@@ -97,7 +97,7 @@ public class SQLParserTest {
 		Assert.assertEquals("sakila", table.getSchema());
 		Assert.assertEquals("film", table.getName());
 		Assert.assertEquals(13, table.getColumns().size());
-		Assert.assertEquals(Table.Column.MySQLDataType.SMALLINT, ((Table.Column.MySQLDataType) table.getColumns().get(0).getDataType()));
+		Assert.assertEquals("SMALLINT", ((Table.Column.MySQLDataType) table.getColumns().get(0).getDataType()).getDataType());
 		Assert.assertEquals(255, ((Table.Column.MySQLDataType) table.getColumns().get(1).getDataType()).get());
 		Assert.assertNotNull(table.getPk());
 		Assert.assertEquals("fk_film_language_original", table.getFks().get(1).getName());
@@ -169,12 +169,17 @@ public class SQLParserTest {
 	
 	@Test
 	public void testEnum() {
-		Table.Column.OracleDataType type1 = Table.Column.OracleDataType.valueOf("NUMBER");
+		Table.Column.OracleDataType type1 = new Table.Column.OracleDataType("NUMBER");
 		type1.set(7, 3);
-		Table.Column.OracleDataType type2 = Table.Column.OracleDataType.valueOf("NUMBER");
+		Table.Column.OracleDataType type2 = new Table.Column.OracleDataType("NUMBER");
 		type2.set(10, 4);
-		Assert.assertEquals(type1.getPrecision(), type2.getPrecision());
-		Assert.assertEquals(type1.getScale(), type2.getScale());
+		Assert.assertNotEquals(type1.getPrecision(), type2.getPrecision());
+		Assert.assertNotEquals(type1.getScale(), type2.getScale());
+		Dialect orcl = Dialect.ORACLE;
+		orcl.setVersion(11, 0, 2);
+		Dialect orc = Dialect.ORACLE;
+		orc.setVersion(10, 1, 2);
+		Assert.assertEquals(orcl.getMajor(), orc.getMajor());
 	}
 
 }

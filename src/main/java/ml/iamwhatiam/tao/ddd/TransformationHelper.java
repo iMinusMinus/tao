@@ -239,9 +239,9 @@ public class TransformationHelper {
 		Set<Map.Entry<String,String>> keySet = predefined.entrySet();
 		for(Map.Entry<String,String> entry : keySet) {
 			switch(dialect) {
-			case MYSQL: converter.put(Table.Column.MySQLDataType.valueOf(entry.getKey()), ReflectionUtils.findClass(entry.getValue())); break;
-			case POSTGRES: converter.put(Table.Column.PostgresDataType.valueOf(entry.getKey()), ReflectionUtils.findClass(entry.getValue())); break;
-			case ORACLE: converter.put(Table.Column.OracleDataType.valueOf(entry.getKey()), ReflectionUtils.findClass(entry.getValue())); break;
+			case MYSQL: converter.put(new Table.Column.MySQLDataType(entry.getKey()), ReflectionUtils.findClass(entry.getValue())); break;
+			case POSTGRES: converter.put(new Table.Column.PostgresDataType(entry.getKey()), ReflectionUtils.findClass(entry.getValue())); break;
+			case ORACLE: converter.put(new Table.Column.OracleDataType(entry.getKey()), ReflectionUtils.findClass(entry.getValue())); break;
 			default:
 			}
 		}
@@ -276,59 +276,35 @@ public class TransformationHelper {
 	 */
 	private static Class<?> dataType2javaType(Table.Column.MySQLDataType dataType) {
 		Class<?> javaType = null;
-		switch(dataType) {
-		case TINYINT://maybe boolean
-		case SMALLINT: javaType = Integer.TYPE; break;
-		case MEDIUMINT:
-		case INT: 
-			if(dataType.isUnsigned())
-				javaType = Long.TYPE;
-			else javaType = Integer.TYPE; break;
-		case BIGINT:
-			if(dataType.isUnsigned())
-				javaType = BigInteger.class;
-			else javaType = Long.TYPE; break;
-		case DECIMAL:
+		if(dataType.equals("TINYINT")) javaType = Integer.TYPE;//maybe boolean
+		else if(dataType.equals("SMALLINT")) javaType = Integer.TYPE;
+		else if(dataType.equals("MEDIUMINT") || dataType.equals("INT")) {
+			if(dataType.isUnsigned()) javaType = Long.TYPE;
+			else javaType = Integer.TYPE;
+		}
+		else if(dataType.equals("BIGINT")) {
+			if(dataType.isUnsigned()) javaType = BigInteger.class;
+			else javaType = Long.TYPE;
+		}
+		else if(dataType.equals("DECIMAL")) {
 			if(dataType.getPrecision() < 10 && dataType.getScale() == 0) javaType = Integer.TYPE;
 			else if(dataType.getPrecision() < 19 && dataType.getScale() == 0) javaType = Long.TYPE;
 			else if(dataType.getScale() == 0) javaType = BigInteger.class;
 			else javaType = BigDecimal.class;
-			break;
-		case FLOAT: javaType = Float.TYPE; break;
-		case DOUBLE: javaType = Double.TYPE; break;
-		case BIT: 
+		}
+		else if(dataType.equals("FLOAT")) javaType = Float.TYPE;
+		else if(dataType.equals("DOUBLE")) javaType = Double.TYPE;
+		else if(dataType.equals("BIT")) {
 			if(dataType.get() == 1) javaType = Boolean.TYPE; 
 			else javaType = byte[].class;
-			break;
-		case DATE:
-		case DATETIME:
-		case TIMESTAMP:	
-		case TIME:
-		case YEAR: javaType = Date.class; break;//maybe long or String
-		case CHAR://maybe char[]
-		case VARCHAR:
-		case TINYTEXT:
-		case MEDIUMTEXT:
-		case TEXT:
-		case LONGTEXT: javaType = String.class; break;
-		case BINARY:
-		case VARBINARY:
-		case TINYBLOB:
-		case MEDIUMBLOB:
-		case BLOB:
-		case LONGBLOB: javaType = String.class; break;
-		case ENUM: javaType = Enum.class; break;
-		case SET: javaType = Set.class; break;
-		case GEOMETRY:
-		case POINT:
-		case LINESTRING:
-		case POLYGON:
-		case MULTIPOINT:
-		case MULTILINESTRING:
-		case MULTIPOLYGON:
-		case GEOMETRYCOLLECTION: javaType = String.class; break;//user defined java bean!
-		default:
 		}
+		else if(dataType.equals("DATE") || dataType.equals("DATETIME") || dataType.equals("TIMESTAMP") || dataType.equals("TIME") || dataType.equals("YEAR"))
+			javaType = Date.class;
+		else if(dataType.equals("ENUM")) javaType = Enum.class;
+		else if(dataType.equals("SET")) javaType = Set.class;
+		else if(dataType.equals("CHAR")) javaType = String.class;//maybe char[]
+		else if(dataType.equals("GEOMETRY")) javaType = String.class;//user defined java bean!
+		else javaType = String.class;
 		return javaType;
 	}
 	
@@ -340,49 +316,23 @@ public class TransformationHelper {
 	 */
 	private static Class<?> dataType2javaType(Table.Column.PostgresDataType dataType) {
 		Class<?> javaType = null;
-		switch(dataType) {
-		case SMALLSERIAL:
-		case SMALLINT: javaType = Short.TYPE; break;
-		case SERIAL:
-		case INTEGER: javaType = Integer.TYPE; break;
-		case BIGSERIAL:
-		case BIGINT: javaType = Long.TYPE; break;
-		case NUMERIC:
+		if(dataType.equals("SMALLSERIAL") || dataType.equals("SMALLINT")) javaType = Short.TYPE;
+		else if(dataType.equals("SERIAL") || dataType.equals("INTEGER")) javaType = Integer.TYPE;
+		else if(dataType.equals("BIGSERIAL") || dataType.equals("BIGINT")) javaType = Long.TYPE;
+		else if(dataType.equals("NUMERIC")) {
 			if(dataType.getPrecision() < 10 && dataType.getScale() == 0) javaType = Integer.TYPE;
 			else if(dataType.getPrecision() < 19 && dataType.getScale() == 0) javaType = Long.TYPE;
 			else if(dataType.getScale() == 0) javaType = BigInteger.class;
 			else javaType = BigDecimal.class;
-			break;
-		case REAL: javaType = Float.TYPE; break;
-		case DOUBLE_PRECISION: javaType = Double.TYPE; break;
-		case MONEY: javaType = String.class; break;
-		case CHARACTER:
-		case CHARACTER_VARING:
-		case TEXT: javaType = String.class; break;
-		case BYTEA:	javaType = String.class; break;
-		case DATE:
-		case TIME:
-		case TIMESTAMP: javaType = Date.class; break;
-		case INTERVAL:	break;
-		case BOOLEAN: javaType = Boolean.TYPE; break;
-		case ENUM: javaType = Enum.class; break;
-		case POINT:
-		case LINE:
-		case LSEG:
-		case BOX:
-		case PATH:
-		case POLYGON:
-		case CIRCLE:
-		case CIDR:
-		case INET:
-		case MACADDR: javaType = String.class; break;
-		case BIT:
-		case BIT_VARING: javaType = String.class; break;
-		case XML:
-		case JSON://maybe JSONObject
-		case JSONB: javaType = String.class; break;
-		default:	
 		}
+		else if(dataType.equals("REAL")) javaType = Float.TYPE;
+		else if(dataType.equals("DOUBLE PRECISION")) javaType = Double.TYPE;
+		else if(dataType.equals("DATE") || dataType.equals("TIME") || dataType.equals("TIMESTAMP")) javaType = Date.class;
+		else if(dataType.equals("BOOLEAN")) javaType = Boolean.TYPE;
+		else if(dataType.equals("ENUM")) javaType = Enum.class;
+		else if(dataType.equals("JSON")) javaType = String.class;//maybe JSONObject
+		else if(dataType.equals("LINE")) javaType = String.class;//geo type should be java bean
+		else javaType = String.class;
 		return javaType;
 	}
 	
@@ -394,28 +344,18 @@ public class TransformationHelper {
 	 */
 	private static Class<?> dataType2javaType(Table.Column.OracleDataType dataType) {
 		Class<?> javaType = null;
-		switch(dataType) {
-		case CHAR:
-		case VARCHAR2:
-		case NCHAR:
-		case NVARCHAR2:
-		case CLOB:
-		case NCLOB: javaType = String.class; break;
-		case NUMBER: 
+		if(dataType.equals("NUMBER")) {
 			if(dataType.getPrecision() < 10 && dataType.getScale() == 0) javaType = Integer.TYPE;
 			else if(dataType.getPrecision() < 19 && dataType.getScale() == 0) javaType = Long.TYPE;
 			else if(dataType.getScale() == 0) javaType = BigInteger.class;
 			else javaType = BigDecimal.class;
-			break;
-		case BINARY_FLOAT: javaType = Float.TYPE; break;
-		case BINARY_DOUBLE: javaType = Double.TYPE; break;
-		case DATE:
-		case TIMESTAMP: javaType = Date.class; break;
-		case INTERVAL:
-		case BLOB://maybe byte[] or InputStream
-		case BFILE://maybe File
-		default:	
 		}
+		else if(dataType.equals("BINARY_FLOAT")) javaType = Float.TYPE;
+		else if(dataType.equals("BINARY_DOUBLE")) javaType = Double.TYPE;
+		else if(dataType.equals("DATE") || dataType.equals("TIMESTAMP")) javaType = Date.class;
+		else if(dataType.equals("BLOB")) javaType = String.class;//maybe byte[] or InputStream
+		else if(dataType.equals("BFILE")) javaType = String.class;//maybe File or URL
+		else javaType = String.class;
 		return javaType;
 	}
 	
