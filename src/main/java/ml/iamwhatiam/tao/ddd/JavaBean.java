@@ -166,16 +166,39 @@ public class JavaBean implements Serializable {
 
 		private static final long serialVersionUID = 1L;
 		
+		/**
+		 * field name
+		 */
 		private String name;
 		
+		/**
+		 * field type name
+		 */
 		private String type;
 		
+		/**
+		 * field type
+		 */
 		private Class<?> klazz;
 		
+		/**
+		 * field default value
+		 */
 		private Object defaultValue;
 		
+		/**
+		 * field value
+		 */
+		private Object value;
+		
+		/**
+		 * field comment
+		 */
 		private String comment;
 		
+		/**
+		 * field constraints
+		 */
 		private List<Constraint> constraints;
 		
 		public Property(String name, Class<?> javaType) {
@@ -206,7 +229,7 @@ public class JavaBean implements Serializable {
 			return type;
 		}
 
-		public void setType(String type) {
+		void setType(String type) {
 			this.type = type;
 		}
 		
@@ -220,6 +243,14 @@ public class JavaBean implements Serializable {
 
 		public void setDefaultValue(Object defaultValue) {
 			this.defaultValue = defaultValue;
+		}
+
+		public Object getValue() {
+			return value;
+		}
+
+		public void setValue(Object value) {
+			this.value = value;
 		}
 
 		public String getComment() {

@@ -53,7 +53,7 @@ public class SQLParserTest {
 			Assert.assertEquals("EMP", table.getName());
 			Assert.assertEquals(8, table.getColumns().size());
 			Assert.assertFalse(table.getColumns().get(0).isNullable());
-			Assert.assertEquals(10, ((Table.Column.OracleDataType) table.getColumns().get(1).getDataType()).get());
+			Assert.assertEquals(Integer.valueOf(10), ((Table.Column.OracleDataType) table.getColumns().get(1).getDataType()).get());
 			Assert.assertEquals("deptno", table.getColumns().get(7).getName());
 			Assert.assertNotNull(table.getFks());
 		} catch (FileNotFoundException e) {
@@ -98,7 +98,7 @@ public class SQLParserTest {
 		Assert.assertEquals("film", table.getName());
 		Assert.assertEquals(13, table.getColumns().size());
 		Assert.assertEquals("SMALLINT", ((Table.Column.MySQLDataType) table.getColumns().get(0).getDataType()).getDataType());
-		Assert.assertEquals(255, ((Table.Column.MySQLDataType) table.getColumns().get(1).getDataType()).get());
+		Assert.assertEquals(Integer.valueOf(255), ((Table.Column.MySQLDataType) table.getColumns().get(1).getDataType()).get());
 		Assert.assertNotNull(table.getPk());
 		Assert.assertEquals("fk_film_language_original", table.getFks().get(1).getName());
 		Assert.assertNull(table.getComment());
@@ -180,6 +180,15 @@ public class SQLParserTest {
 		Dialect orc = Dialect.ORACLE;
 		orc.setVersion(10, 1, 2);
 		Assert.assertEquals(orcl.getMajor(), orc.getMajor());
+	}
+	
+	@Test(expected = RuntimeException.class)
+	public void testBadSql() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("CREA/*comment*/TE TABLE test (id bigint, text varchar2(4000), status char(1) not null default '0');").append("\n");
+		SQLParser parser = new SQLParser(Dialect.ORACLE);
+		Table table = parser.parse(new ByteArrayInputStream(sb.toString().getBytes()));
+		Assert.assertEquals(null, table);
 	}
 
 }

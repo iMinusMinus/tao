@@ -426,31 +426,7 @@ public class Table {
 			case MYSQL: available = MySQLDataType.types; break;
 			case ORACLE: available = OracleDataType.types; break;
 			case POSTGRES: available = PostgresDataType.types; break;
-			default: {
-				available = new HashMap<String, Class<? extends DataType>>();
-				available.put("BOOLEAN", DataType.class);
-				available.put("CHARACTER", CharacterType.class);
-				available.put("CHARACTER VARYING", CharacterType.class);
-				available.put("CHARACTER LARGE OBJECT", CharacterType.class);
-				available.put("BINARY", CharacterType.class);
-				available.put("BINARY VARYING", CharacterType.class);
-				available.put("BINARY LARGE OBJECT", CharacterType.class);
-				available.put("BIT", CharacterType.class);
-				available.put("BIT VARYING", CharacterType.class);
-				available.put("DECIMAL", NumericType.class);
-				available.put("SMALLINT", NumericType.class);
-				available.put("INTEGER", NumericType.class);
-				available.put("BIGINT", NumericType.class);
-				available.put("BINARY", NumericType.class);
-				available.put("FLOAT", NumericType.class);
-				available.put("REAL", NumericType.class);
-				available.put("DOUBLE PRECISION", NumericType.class);
-				available.put("ENUMERATED", EnumeratedType.class);
-				available.put("DATE", DateTimeType.class);
-				available.put("TIME", DateTimeType.class);
-				available.put("TIMESTAMP", DateTimeType.class);
-				available.put("INTERVAL", DateTimeType.class);
-			}
+			default: available = StandardDataType.types;
 			}
 			return available;
 		}
@@ -465,454 +441,26 @@ public class Table {
 			
 			String toSQL();
 			
-			public static final DataType BOOLEAN = new DataType() {
-				
-				public String toSQL() {
-					return "BOOLEAN";
-				}
-			};
-			
 		}
 		
 		public static interface CharacterType extends DataType {
 			
-			int get();
+			Integer get();
 			
 			void set(int length);
-			
-			public static final DataType CHARACTER = new CharacterType() {
-				
-				@Min(1)
-				private int length;
-				
-				public void set(int length) {
-					this.length = length;
-				}
-				
-				public int get() {
-					return length;
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("CHARACTER");
-					if(length > 0)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-			};
-			
-			public static final DataType CHARACTER_VARYING = new CharacterType() {
-				
-				@Min(1)
-				private int length;
-				
-				public void set(int length) {
-					this.length = length;
-				}
-				
-				public int get() {
-					return length;
-				}
-
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("CHARACTER VARYING");
-					if(length > 0)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-				
-			};
-			
-			public static final DataType CHARACTER_LARGE_OBJECT = new CharacterType() {//CLOB, TEXT
-
-				public void set(int length) {
-					throw new NotImplementedException();
-					
-				}
-
-				public int get() {
-					throw new NotImplementedException();
-				}
-				
-				public String toSQL() {
-					return "CHARACTER LARGE OBJECT VARYING";
-				}
-				
-			};
-			
-			public static final DataType BINARY = new CharacterType() {
-				
-				@Min(1)
-				private int length;
-
-				public void set(int length) {
-					this.length = length;
-				}
-
-				public int get() {
-					return length;
-				}
-
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("BINARY");
-					if(length > 0)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-				
-			};
-			
-			public static final DataType BINARY_VARYING = new CharacterType() {
-				
-				@Min(1)
-				private int length;
-
-				public void set(int length) {
-					this.length = length;
-				}
-
-				public int get() {
-					return length;
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("BINARY VARYING");
-					if(length > 0)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-				
-			};
-			
-			public static final DataType BINARY_LARGE_OBJECT = new CharacterType() {//BLOB
-
-				public void set(int length) {
-					throw new NotImplementedException();
-				}
-
-				public int get() {
-					throw new NotImplementedException();
-				}
-				
-				public String toSQL() {
-					return "BINARY LARGE OBJECT";
-				}
-				
-			};
-			
-			@Deprecated//deleted from SQL:2003
-			public static final DataType BIT = new CharacterType() {
-				
-				@Min(1)
-				private int length;
-
-				public void set(int length) {
-					this.length = length;
-				}
-
-				public int get() {
-					return length;
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("BIT");
-					if(length > 0)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-				
-			};
-			
-			@Deprecated//deleted from SQL:2003
-			public static final DataType BIT_VARYING = new CharacterType() {
-
-				@Min(1)
-				private int length;
-				
-				public void set(int length) {
-					this.length = length;
-					
-				}
-
-				public int get() {
-					return length;
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("BIT VARYING");
-					if(length > 0)
-						sb.append("(").append(length).append(")");
-					return sb.toString();
-				}
-				
-			};
 			
 		}
 		
 		public static interface NumericType extends DataType {
 			
-			int getPrecision();
+			Integer getPrecision();
 			
-			int getScale();
+			Integer getScale();
 			
 			void set(int precision);
 			
 			void set(int precision, int scale);
 			
-			public static final DataType NUMERIC = new NumericType() {
-				
-				@Min(1)
-				private int precision;
-				
-				@Min(0)
-				private int scale;
-				
-				public int getPrecision() {
-					return precision;
-				}
-				
-				public int getScale() {
-					return scale;
-				}
-
-				public void set(int precision) {
-					this.precision = precision;
-					scale = 0;
-				}
-
-				public void set(int precision, int scale) {
-					this.precision = precision;
-					this.scale = scale;
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("NUMERIC");
-					if(precision > 0)
-						sb.append("(").append(precision).append(",").append(scale).append(")");
-					return sb.toString();
-				}
-				
-			};
-			
-			public static final DataType DECIMAL = new NumericType() {
-				
-				@Min(1)
-				private int precision;
-				
-				@Min(0)
-				private int scale;
-				
-				public int getPrecision() {
-					return precision;
-				}
-				
-				public int getScale() {
-					return scale;
-				}
-				
-				public void set(int length) {
-					precision = length;
-					scale = 0;
-				}
-
-				public void set(int precision, int scale) {
-					this.precision = precision;
-					this.scale = scale;
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("DECIMAL");
-					if(precision > 0)
-						sb.append("(").append(precision).append(",").append(scale).append(")");
-					return sb.toString();
-				}
-				
-			};
-			
-			public static final DataType SMALLINT = new NumericType() {
-				
-				@Min(1)
-				private int precision;
-				
-				public int getPrecision() {
-					return precision;
-				}
-				
-				public int getScale() {
-					throw new NotImplementedException();
-				}
-
-				public void set(int length) {
-					precision = length;
-				}
-
-				public void set(int precision, int scale) {
-					throw new NotImplementedException();
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("SMALLINT");
-					if(precision > 0)
-						sb.append("(").append(precision).append(")");
-					return sb.toString();
-				}
-				
-			};
-
-			public static final DataType INTEGER = new NumericType() {
-				
-				@Min(1)
-				private int precision;
-				
-				public int getPrecision() {
-					return precision;
-				}
-				
-				public int getScale() {
-					throw new NotImplementedException();
-				}
-				
-				public void set(int precision) {
-					this.precision = precision;
-				}
-
-				public void set(int precision, int scale) {
-					throw new NotImplementedException();
-					
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("INTEGER");
-					if(precision > 0)
-						sb.append("(").append(precision).append(")");
-					return sb.toString();
-				}
-				
-			};
-			
-			public static final DataType BIGINT = new NumericType() {
-
-				@Min(1)
-				private int precision;
-				
-				public int getPrecision() {
-					return precision;
-				}
-				
-				public int getScale() {
-					throw new NotImplementedException();
-				}
-				
-				public void set(int precision) {
-					this.precision = precision;
-				}
-
-				public void set(int precision, int scale) {
-					throw new NotImplementedException();
-					
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("BIGINT");
-					if(precision > 0)
-						sb.append("(").append(precision).append(")");
-					return sb.toString();
-				}
-				
-			};
-			
-			public static final DataType FLOAT = new NumericType() {
-
-				@Min(1)
-				private int precision;
-				
-				public int getPrecision() {
-					return precision;
-				}
-				
-				public int getScale() {
-					throw new NotImplementedException();
-				}
-				
-				public void set(int precision) {
-					this.precision = precision;
-				}
-
-				public void set(int precision, int scale) {
-					throw new NotImplementedException();
-					
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("FLOAT");
-					if(precision > 0)
-						sb.append("(").append(precision).append(")");
-					return sb.toString();
-				}
-				
-			};
-			
-			public static final DataType REAL = new NumericType() {
-
-				@Min(1)
-				private int precision;
-				
-				public int getPrecision() {
-					return precision;
-				}
-				
-				public int getScale() {
-					throw new NotImplementedException();
-				}
-				
-				public void set(int precision) {
-					this.precision = precision;
-				}
-
-				public void set(int precision, int scale) {
-					throw new NotImplementedException();
-					
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("REAL");
-					if(precision > 0)
-						sb.append("(").append(precision).append(")");
-					return sb.toString();
-				}
-				
-			};
-			
-			public static final DataType DOUBLE_PRECISION = new NumericType() {
-
-				@Min(1)
-				private int precision;
-				
-				public int getPrecision() {
-					return precision;
-				}
-				
-				public int getScale() {
-					throw new NotImplementedException();
-				}
-				
-				public void set(int precision) {
-					this.precision = precision;
-				}
-
-				public void set(int precision, int scale) {
-					throw new NotImplementedException();
-					
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("DOUBLE PRECISION");
-					if(precision > 0)
-						sb.append("(").append(precision).append(")");
-					return sb.toString();
-				}
-				
-			};
 		}	
 		public static interface EnumeratedType extends DataType {	
 			
@@ -920,223 +468,21 @@ public class Table {
 			
 			void set(String...names);
 			
-			public static final DataType ENUMERATED = new EnumeratedType() {
-				
-				private String[] names;
-				
-				public String[] names() {
-					return names;
-				}
-
-				public void set(String...names) {
-					this.names = names;
-				}
-
-				public String toSQL() {//CREATE TYPE name ENUMERATED(names...);
-					StringBuilder sb = new StringBuilder("ENUMERATED(");
-					for(String name : names)
-						sb.append(name).append(",");
-					sb.setLength(sb.length() - 1);
-					return sb.append(")").toString();
-				}
-				
-			};
 		}	
 		
 		public static interface DateTimeType extends DataType {	
 			
-			int get();
+			Integer get();
 			
 			void set(int precision);
 			
-			boolean withTimeZone();
+			Boolean withTimeZone();
 			
 			void set(boolean withTimeZone);
 			
 			void set(int precision, boolean withTimeZone);
 			
 			void set(int precision, int intervalClass, int fracionalPrecision);
-			
-			public static final DataType DATE = new DateTimeType() {
-				
-				public int get() {
-					throw new UnsupportedOperationException("[DATE] has no fractional seconds precision!");
-				}
-
-				public void set(int precision) {
-					throw new UnsupportedOperationException("[DATE] has no fractional seconds precision!");
-				}
-				
-				public boolean withTimeZone() {
-					throw new UnsupportedOperationException();
-				}
-				
-				public void set(boolean withTimeZone) {
-					throw new UnsupportedOperationException();
-				}
-
-				public void set(int precision, boolean withTimeZone) {
-					throw new UnsupportedOperationException();
-				}
-				
-				public void set(int precision, int intervalClass, int fracionalPrecision) {
-					throw new UnsupportedOperationException();
-				}
-				
-				public String toSQL() {
-					return "DATE";
-				}
-				
-			};
-			
-			public static final DataType TIME = new DateTimeType() {
-				
-				private int precision;
-				
-				private boolean withTimeZone = false;
-				
-				public int get() {
-					return precision;
-				}
-
-				public void set(int precision) {
-					this.precision = precision;
-				}
-				
-				public boolean withTimeZone() {
-					return withTimeZone;
-				}
-				
-				public void set(boolean withTimeZone) {
-					this.withTimeZone = withTimeZone;
-				}
-
-				public void set(int precision, boolean withTimeZone) {
-					this.precision = precision;
-					this.withTimeZone = withTimeZone;
-				}
-				
-				public void set(int precision, int intervalClass, int fracionalPrecision) {
-					throw new UnsupportedOperationException();
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("TIME");
-					if(precision >= 0)
-						sb.append(" (").append(precision).append(")");
-					sb.append(" WITH");
-					if(!withTimeZone)
-						sb.append("OUT");
-					sb.append(" TIME ZONE");
-					return sb.toString();
-				}
-				
-			};
-			
-			public static final DataType TIMESTAMP = new DateTimeType() {
-
-				private int precision;
-				
-				private boolean withTimeZone = false;
-				
-				public int get() {
-					return precision;
-				}
-
-				public void set(int precision) {
-					this.precision = precision;
-				}
-				
-				public boolean withTimeZone() {
-					return withTimeZone;
-				}
-				
-				public void set(boolean withTimeZone) {
-					this.withTimeZone = withTimeZone;
-				}
-
-				public void set(int precision, boolean withTimeZone) {
-					this.precision = precision;
-					this.withTimeZone = withTimeZone;
-				}
-				
-				public void set(int precision, int intervalClass, int fracionalPrecision) {
-					throw new UnsupportedOperationException();
-				}
-				
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("TIMESTAMP");
-					if(precision >= 0)
-						sb.append(" (").append(precision).append(")");
-					sb.append(" WITH");
-					if(!withTimeZone)
-						sb.append("OUT");
-					sb.append(" TIME ZONE");
-					return sb.toString();
-				}
-				
-			};
-			
-			public static final DataType INTERVAL = new DateTimeType() {
-				
-				private int precision = 2;
-				
-				private int fractionalSecondPrecision;
-				
-				@Min(0)
-				@Max(4)
-				private int intervalClass;
-				
-				private final int YEAR_TO_MONTH = 0, DAY_TO_HOUR = 1, DAY_TO_MINUTE = 2/*, DAY_TO_SECOND = 3*/;
-				
-				public int get() {
-					return precision;
-				}
-
-				public void set(int intervalClass) {
-					this.intervalClass = intervalClass;
-					
-				}
-				
-				public boolean withTimeZone() {
-					throw new NotImplementedException();
-				}
-				
-				public void set(boolean withTimeZone) {
-					throw new NotImplementedException();
-				}
-
-				public void set(int precision, boolean withTimeZone) {
-					throw new NotImplementedException();
-				}
-				
-				public void set(int precision, int intervalClass, int fracionalPrecision) {
-					this.precision = precision;
-					this.intervalClass = intervalClass;
-					this.fractionalSecondPrecision = fracionalPrecision;
-				}
-
-				public String toSQL() {
-					StringBuilder sb = new StringBuilder("INTERVAL ");
-					if(intervalClass == YEAR_TO_MONTH) 
-						sb.append("YEAR");
-					else sb.append("DAY");
-					if(precision > 0) 
-						sb.append(" (").append(precision).append(")");
-					sb.append(" TO ");
-					if(intervalClass == YEAR_TO_MONTH)
-						sb.append("MONTH");
-					else if(intervalClass == DAY_TO_HOUR)
-						sb.append("HOUR");
-					else if(intervalClass == DAY_TO_MINUTE)
-						sb.append("MINUTE");
-					else sb.append("SECOND");
-					if(fractionalSecondPrecision > 0)
-						sb.append(" (").append(fractionalSecondPrecision).append(")");
-					return sb.toString();
-				}
-				
-			};
 			
 		}
 		
@@ -1145,6 +491,194 @@ public class Table {
 		 */
 		public static interface UserDefinedType extends DataType {
 			//source(type,)
+		}
+		
+		public static class StandardDataType implements CharacterType, NumericType, EnumeratedType, DateTimeType, UserDefinedType {
+
+			static final Map<String, Class<? extends DataType>> types;
+			
+			private final int YEAR_TO_MONTH = 0, DAY_TO_HOUR = 1, DAY_TO_MINUTE = 2/*, DAY_TO_SECOND = 3*/;
+			
+			private String dataType;
+			
+			private Integer precision;
+			
+			private Integer intervalClass;
+			
+			private Integer scale;
+			
+			private String[] names;
+			
+			private Boolean withTimeZone;
+			
+			static {
+				types = new HashMap<String, Class<? extends DataType>>();
+				/**
+				 * <li>boolean type</li>
+				 */
+				types.put("BOOLEAN", DataType.class);
+				/**
+				 * <li>string types</li>
+				 */
+				//character string types
+				types.put("CHARACTER", CharacterType.class);
+				types.put("CHARACTER VARYING", CharacterType.class);
+				types.put("CHARACTER LARGE OBJECT", CharacterType.class);//CLOB, TEXT
+				//binary string types
+				types.put("BINARY", CharacterType.class);
+				types.put("BINARY VARYING", CharacterType.class);
+				types.put("BINARY LARGE OBJECT", CharacterType.class);//BLOB
+				//bit string types
+				types.put("BIT", CharacterType.class);//Deprecated, deleted from SQL:2003
+				types.put("BIT VARYING", CharacterType.class);//Deprecated, deleted from SQL:2003
+				/**
+				 * <li>numeric types</li>
+				 */
+				//exact numeric types
+				types.put("NUMERIC", NumericType.class);
+				types.put("DECIMAL", NumericType.class);
+				types.put("SMALLINT", NumericType.class);
+				types.put("INTEGER", NumericType.class);
+				types.put("BIGINT", NumericType.class);
+				//approximate numeric types
+				types.put("FLOAT", NumericType.class);
+				types.put("REAL", NumericType.class);
+				types.put("DOUBLE PRECISION", NumericType.class);
+				/**
+				 * <li>enumerated types</li>
+				 */
+				types.put("ENUMERATED", EnumeratedType.class);//CREATE TYPE name ENUMERATED(names...);
+				/**
+				 * <li>datetime types</li>
+				 */
+				types.put("DATE", DateTimeType.class);
+				types.put("TIME", DateTimeType.class);
+				types.put("TIMESTAMP", DateTimeType.class);
+				//interval type
+				types.put("INTERVAL", DateTimeType.class);
+			}
+			
+			public StandardDataType(String dataType) {
+				this.dataType = dataType.toUpperCase();
+				if(types.get(dataType) == null)
+					log.error("no such jdbc type, DO NOT USE SYNONYM!");
+			}
+			
+			public String getDataType() {
+				return dataType;
+			}
+
+			public String toSQL() {
+				StringBuilder sb = new StringBuilder(dataType);
+				if(intervalClass != null) {
+					if(intervalClass.intValue() == YEAR_TO_MONTH)  sb.append(" YEAR");
+					else sb.append(" DAY");
+					if(precision != null) sb.append("(").append(precision.intValue()).append(")");
+					sb.append(" TO");
+					if(intervalClass.intValue() == YEAR_TO_MONTH)  sb.append(" MONTH");
+					else if(intervalClass.intValue() == DAY_TO_HOUR) sb.append(" HOUR");
+					else if(intervalClass.intValue() == DAY_TO_MINUTE) sb.append(" MINUTE");
+					else sb.append(" SECOND");
+					if(scale != null) sb.append("(").append(scale.intValue()).append(")");
+				}
+				else if(types.get(dataType) == EnumeratedType.class){
+					sb.append("(");
+					for(int i = 0; i < names.length; i++) {
+						sb.append(names[i]);
+						if(i < names.length - 1)
+							sb.append(",");
+					}
+					sb.append(")");
+				}
+				else {
+					if(precision != null) sb.append("(").append(precision.intValue());
+					if(scale != null) sb.append(",").append(scale.intValue());
+					sb.append(")");
+					if(dataType.equals("TIME") || dataType.equals("TIMESTAMP")) {
+						sb.append(" WITH");
+						if(withTimeZone != null && !withTimeZone.booleanValue())
+							sb.append("OUT");
+						sb.append(" TIME ZONE");
+					}
+				}
+				return sb.toString();
+			}
+
+			public Boolean withTimeZone() {
+				if(!dataType.equals("TIMESTAMP") && !dataType.equals("TIME")) throw new UnsupportedOperationException("data type not support");
+				return withTimeZone;
+			}
+
+			public void set(boolean withTimeZone) {
+				if(!dataType.equals("TIMESTAMP") && !dataType.equals("TIME")) throw new UnsupportedOperationException("data type not support");
+				this.withTimeZone = Boolean.valueOf(withTimeZone);
+			}
+
+			public void set(int precision, boolean withTimeZone) {
+				if(!dataType.equals("TIMESTAMP") && !dataType.equals("TIME")) throw new UnsupportedOperationException("data type not support");
+				this.withTimeZone = Boolean.valueOf(withTimeZone);
+				this.precision = Integer.valueOf(precision);
+				
+			}
+
+			public void set(int precision, @Min(0) @Max(4) int intervalClass, int fracionalPrecision) {
+				if(!dataType.equals("INTERVAL")) throw new UnsupportedOperationException("data type not support");
+				this.precision = Integer.valueOf(precision);
+				this.intervalClass = Integer.valueOf(intervalClass);
+				this.scale = Integer.valueOf(fracionalPrecision);
+			}
+
+			public String[] names() {
+				if(names != null) return names;
+				if(!dataType.equals("ENUMERATED")) throw new UnsupportedOperationException("data type not support");
+				log.info("ENUMERATED value is null");
+				return null;
+			}
+
+			public void set(String... names) {
+				if(!dataType.equals("ENUMERATED")) throw new UnsupportedOperationException("data type not support");
+				this.names = names;
+			}
+
+			public Integer getPrecision() {
+				if(!dataType.equals("NUMERIC") && !dataType.equals("DECIMAL") && !dataType.equals("INTERVAL"))
+					throw new UnsupportedOperationException("data type not support");
+				if(precision == null && dataType.equals("INTERVAL")) {
+					if(log.isDebugEnabled()) log.debug("precision not set, use default");
+					return 2;
+				}
+				return precision;
+			}
+
+			public Integer getScale() {
+				if(!dataType.equals("NUMERIC") && !dataType.equals("DECIMAL") && !dataType.equals("INTERVAL"))
+					throw new UnsupportedOperationException("data type not support");
+				return scale;
+			}
+
+			public void set(@Min(1) int precision, @Min(0) int scale) {
+				if(!dataType.equals("NUMERIC") && !dataType.equals("DECIMAL")) throw new UnsupportedOperationException("data type not support");
+				this.precision = Integer.valueOf(precision);
+				this.scale = Integer.valueOf(scale);
+			}
+
+			public Integer get() {
+				if(!dataType.equals("CHARACTER") && !dataType.equals("CHARACTER VARYING") && !dataType.equals("BINARY") && !dataType.equals("BINARY VARYING")
+						&& !dataType.equals("BIT") && !dataType.equals("BIT VARYING") && !dataType.equals("TIME") && !dataType.equals("TIMESTAMP")
+						&& !dataType.equals("INTERVAL") && types.get(dataType) != NumericType.class) 
+					throw new UnsupportedOperationException("data type not support");
+				return precision;
+			}
+
+			public void set(@Min(0) int length) {
+				if(!dataType.equals("CHARACTER") && !dataType.equals("CHARACTER VARYING") && !dataType.equals("BINARY") && !dataType.equals("BINARY VARYING")
+						&& !dataType.equals("BIT") && !dataType.equals("BIT VARYING") && !dataType.equals("TIME") && !dataType.equals("TIMESTAMP")
+						&& !dataType.equals("INTERVAL") && types.get(dataType) != NumericType.class) 
+					throw new UnsupportedOperationException("data type not support");
+				if((types.get(dataType) == CharacterType.class || types.get(dataType) == NumericType.class) && length < 1)
+					log.warn("length or precision must greater than 1");
+				this.precision = Integer.valueOf(length);
+			}
 		}
 		
 		
@@ -1220,9 +754,9 @@ public class Table {
 				types.put("MEDIUMTEXT", CharacterType.class);//LONG and LONG VARCHAR map to the MEDIUMTEXT
 				types.put("LONGTEXT", CharacterType.class);
 				//ENUM Type
-				types.put("ENUM", CharacterType.class);
+				types.put("ENUM", EnumeratedType.class);
 				//SET type
-				types.put("SET", CharacterType.class);
+				types.put("SET", UserDefinedType.class);
 				/**
 				 * <li>Spatial Data Types</li>
 				 */
@@ -1263,10 +797,11 @@ public class Table {
 					sb.append(")");
 				}
 				if(zerofill) sb.append(" UNSIGNED ZEROFILL");
+				else if(unsigned) sb.append(" UNSIGNED");
 				return sb.toString();
 			}
 
-			public boolean withTimeZone() {
+			public Boolean withTimeZone() {
 				if(types.get(dataType) != DateTimeType.class)
 					throw new UnsupportedOperationException("data type not support");
 				throw new UnsupportedOperationException("mysql not support");
@@ -1297,60 +832,70 @@ public class Table {
 			}
 
 			public String[] names() {
-				if(dataType.equals("SET") || dataType.equals("ENUM"))
-					return names;
-				else throw new UnsupportedOperationException("data type not support");
+				if(!dataType.equals("SET") && !dataType.equals("ENUM"))
+					throw new UnsupportedOperationException("data type not support");
+				return names;
 			}
 
 			public void set(String... names) {
-				if(dataType.equals("SET") || dataType.equals("ENUM"))
-					this.names = names;
-				else throw new UnsupportedOperationException("data type not support");
+				if(!dataType.equals("SET") && !dataType.equals("ENUM"))
+					throw new UnsupportedOperationException("data type not support");
+				this.names = names;
 			}
 
-			public int getPrecision() {
-				if(precision != null) return precision.intValue();
-				else if(dataType.equals("DECIMAL")) return 10;
-				else if(dataType.equals("FLOAT")) return 23;
-				else if(dataType.equals("DOUBLE")) {
-					if(scale == null) return 53;
-					else return 255;
+			public Integer getPrecision() {
+				if(types.get(dataType) != NumericType.class && !dataType.equals("TIME") && !dataType.equals("DATETIME") && !dataType.equals("TIMESTAMP"))
+					throw new UnsupportedOperationException("data type not support");
+				if(precision == null) {
+					if(log.isDebugEnabled()) log.debug("precision not set, try to use default");
+					if(dataType.equals("DECIMAL")) return 10;
+					else if(dataType.equals("FLOAT")) return 23;
+					else if(dataType.equals("DOUBLE")) {
+						if(scale == null) return 53;
+						else return 255;
+					}
 				}
-				else throw new UnsupportedOperationException("data type not support");
+				return precision;
 			}
 
-			public int getScale() {
-				if(scale != null)
-					return scale.intValue();
-				if(log.isDebugEnabled()) log.debug("scale not set, use default");
-				if(dataType.equals("DECIMAL")) return 0;
-				else throw new UnsupportedOperationException("data type not support");
+			public Integer getScale() {
+				if(!dataType.equals("DECIMAL") && !dataType.equals("FLOAT") && !dataType.equals("DOUBLE"))
+					throw new UnsupportedOperationException("data type not support");
+				if(scale == null) {
+					if(log.isDebugEnabled()) log.debug("scale not set, try to use default");
+					if(dataType.equals("DECIMAL")) return 0;
+				}
+				return scale;
 			}
 
 			public void set(int precision, int scale) {
 				set(precision, scale, false, false);
 			}
 
-			public int get() {
-				if(precision != null)
-					return precision.intValue();
-				if(log.isDebugEnabled()) log.debug("length or fraction not set, use default[max] value");
-				if(dataType.equals("TINYINT")) return 1;
-				else if(dataType.equals("SMALLINT")) return 2;
-				else if(dataType.equals("MEDIUMINT")) return 3;
-				else if(dataType.equals("INT")) return 4;
-				else if(dataType.equals("BIGINT")) return 8;
-				else if(dataType.equals("CHAR") || dataType.equals("BINARY")) return 255;
-				else if(dataType.equals("VARCHAR") || dataType.equals("VARBINARY")) return 65535;
-				else if(dataType.equals("TIME") || dataType.equals("DATETIME") || dataType.equals("DATETIME"))
-						return 0;//differs from the standard SQL default of 6, for compatibility with previous MySQL versions.
-				else if(dataType.equals("YEAR")) return 4;
-				else throw new UnsupportedOperationException("data type not support");
+			public Integer get() {
+				if(types.get(dataType) == UserDefinedType.class || (types.get(dataType) == DateTimeType.class && dataType.equals("DATE"))
+						|| (types.get(dataType) == CharacterType.class && (dataType.indexOf("BLOB") > 0 || dataType.indexOf("TEXT") > 0))
+						|| types.get(dataType) == EnumeratedType.class)
+					throw new UnsupportedOperationException("data type not support");
+				if(precision == null) {
+					if(log.isDebugEnabled()) log.debug("length or fraction not set, use default[max] value");
+					if(dataType.equals("TINYINT")) return 1;
+					else if(dataType.equals("SMALLINT")) return 2;
+					else if(dataType.equals("MEDIUMINT")) return 3;
+					else if(dataType.equals("INT")) return 4;
+					else if(dataType.equals("BIGINT")) return 8;
+					else if(dataType.equals("CHAR") || dataType.equals("BINARY")) return 255;
+					else if(dataType.equals("VARCHAR") || dataType.equals("VARBINARY")) return 65535;
+					else if(dataType.equals("TIME") || dataType.equals("DATETIME") || dataType.equals("DATETIME"))
+							return 0;//differs from the standard SQL default of 6, for compatibility with previous MySQL versions.
+					else if(dataType.equals("YEAR")) return 4;
+				}
+				return precision;
 			}
 
 			public void set(@Min(0) @Max(65535) int length) {
 				if(types.get(dataType) == CharacterType.class) {
-					if(dataType.indexOf("BLOB") > 0 || dataType.indexOf("TEXT") > 0 || dataType.indexOf("ENUM") >= 0|| dataType.indexOf("SET") >= 0)
+					if(dataType.indexOf("BLOB") > 0 || dataType.indexOf("TEXT") > 0)
 						throw new UnsupportedOperationException("data type not support");
 					if((dataType.equals("CHAR") || dataType.equals("BINARY")) && length > 255)
 						log.error("length cannot exceed 255");
@@ -1380,6 +925,7 @@ public class Table {
 						|| (dataType.equals("DOUBLE") && precision > 53))
 					log.warn("precision greater than maxium precision, value also cannot exceed");
 				this.precision = Integer.valueOf(precision);
+				this.unsigned = unsigned;
 				this.zerofill = zerofill;
 				if(zerofill && !unsigned)
 					log.error("if you specify ZEROFILL for a numeric column, MySQL automatically adds the UNSIGNED attribute to the column");
@@ -1510,13 +1056,13 @@ public class Table {
 				return sb.toString();
 			}
 
-			public boolean withTimeZone() {
+			public Boolean withTimeZone() {
 				if(!dataType.equals("TIMESTAMP")) throw new UnsupportedOperationException("data type not support");
-				else if(withTimeZone != null) return withTimeZone.booleanValue();
-				else {
+				if(withTimeZone == null) {
 					if(log.isDebugEnabled()) log.debug("WITH[OUT] TIME ZONE not set, use default");
 					return true;
 				}
+				return withTimeZone;
 			}
 			
 			public void set(boolean withTimeZone) {
@@ -1540,20 +1086,26 @@ public class Table {
 				
 			}
 
-			public int getPrecision() {
-				if(precision != null) return precision.intValue();
-				if(log.isDebugEnabled()) log.debug("precision not set, use default value");
-				if(dataType.equals("NUMBER")) return 38;//max
-				else if(dataType.equals("INTERVAL")) return 2;
-				else throw new UnsupportedOperationException("data type not support");
+			public Integer getPrecision() {
+				if(!dataType.equals("NUMBER") && !dataType.equals("FLOAT") && !dataType.equals("TIMESTAMP") && !dataType.equals("INTERVAL"))
+					throw new UnsupportedOperationException("data type not support");
+				if(precision == null) {
+					if(log.isDebugEnabled()) log.debug("precision not set, use default value");
+					if(dataType.equals("NUMBER")) return 38;//max
+					else if(dataType.equals("INTERVAL")) return 2;
+				}
+				return precision;
 			}
 
-			public int getScale() {
-				if(scale != null) return scale.intValue();
-				if(log.isDebugEnabled()) log.debug("scale not set, use default value");
-				if(dataType.equals("NUMBER")) return 0;
-				else if(intervalClass != null && intervalClass == DAY_TO_SECOND) return 6;
-				else throw new UnsupportedOperationException("data type not support");
+			public Integer getScale() {
+				if(!dataType.equals("NUMBER") && !dataType.equals("INTERVAL"))
+					throw new UnsupportedOperationException("data type not support");
+				if(scale == null) {
+					if(log.isDebugEnabled()) log.debug("scale not set, use default value");
+					if(dataType.equals("NUMBER")) return 0;
+					else if(intervalClass != null && intervalClass == DAY_TO_SECOND) return 6;
+				}
+				return scale;
 			}
 
 			public void set(@Min(1) @Max(38) int precision, @Min(-84) @Max(127) int scale) {
@@ -1562,14 +1114,18 @@ public class Table {
 				this.scale = Integer.valueOf(scale);
 			}
 
-			public int get() {
-				if(precision != null) return precision.intValue();
-				if(log.isDebugEnabled()) log.debug("length not set, use default value");
-				if(dataType.equals("CHAR") || dataType.equals("NCHAR")) return 1;
-				else if(dataType.equals("TIMESTAMP")) return 6;
-				else if(dataType.equals("UROWID") || dataType.equals("NVARCHAR2") || dataType.equals("VARCHAR2")) return 4000;//must specify size
-				else if(dataType.equals("RAW")) return 2000;//must specify size for a RAW value!
-				else throw new UnsupportedOperationException("data type not support");
+			public Integer get() {
+				if(!dataType.equals("CHAR") && !dataType.equals("NCHAR") && !dataType.equals("VARCHAR2") && !dataType.equals("NVARCHAR2")
+						&& !dataType.equals("RAW") && !dataType.equals("NUMBER") && !dataType.equals("FLOAT")
+						&& !dataType.equals("TIMESTAMP") && !dataType.equals("INTERVAL") && !dataType.equals("UROWID"))
+					throw new UnsupportedOperationException("data type not support");
+				if(precision == null) {
+					if(log.isDebugEnabled()) log.debug("length not set, use default value");
+					if(dataType.equals("CHAR") || dataType.equals("NCHAR")) return 1;
+					else if(dataType.equals("TIMESTAMP")) return 6;
+					else if(dataType.equals("UROWID") || dataType.equals("NVARCHAR2") || dataType.equals("VARCHAR2")) return 4000;//must specify size
+				}
+				return precision;
 			}
 
 			public void set(@Min(0) @Max(4000) int length) {
@@ -1789,11 +1345,14 @@ public class Table {
 				return sb.toString();
 			}
 
-			public boolean withTimeZone() {
-				if(withTimeZone != null) return withTimeZone.booleanValue();
-				if(log.isDebugEnabled()) log.debug("WITH TIME ZONE not set, use default");
-				if(dataType.equals("TIME") || dataType.equals("TIMESTAMP")) return false;
-				else throw new UnsupportedOperationException("data type not support");
+			public Boolean withTimeZone() {
+				if(!dataType.equals("TIME") && !dataType.equals("TIMESTAMP"))
+					throw new UnsupportedOperationException("data type not support");
+				if(withTimeZone == null) {
+					if(log.isDebugEnabled()) log.debug("WITH TIME ZONE not set, use default");
+					if(dataType.equals("TIME") || dataType.equals("TIMESTAMP")) return false;
+				}
+				return withTimeZone;
 			}
 			
 			public void set(boolean withTimeZone) {
@@ -1818,17 +1377,20 @@ public class Table {
 				//XXX pgAdmin: interval year to month --auto translate --> "interval year to month"(65535), but exec this create script will fail
 			}
 
-			public int getPrecision() {
-				if(precision != null) return precision.intValue();
-				if(log.isDebugEnabled()) log.debug("precision not set, use default");
-				if(dataType.equals("NUMERIC")) return 1000;//values of any precision and scale
-				else throw new UnsupportedOperationException("data type not support");
+			public Integer getPrecision() {
+				if(!dataType.equals("NUMERIC") && !dataType.equals("INTERVAL"))
+					throw new UnsupportedOperationException("data type not support");
+				if(precision == null) {
+					if(log.isDebugEnabled()) log.debug("precision not set, use default");
+					if(dataType.equals("NUMERIC")) return 1000;//values of any precision and scale
+				}
+				return precision;
 			}
 
-			public int getScale() {
-				if(scale != null) return scale.intValue();
-				if(dataType.equals("NUMERIC")) return 1000;//values of any precision and scale
-				else throw new UnsupportedOperationException("data type not support");
+			public Integer getScale() {
+				if(!dataType.equals("NUMERIC"))
+					throw new UnsupportedOperationException("data type not support");
+				return scale;
 			}
 
 			public void set(@Min(1) @Max(1000) int precision, @Min(0) @Max(1000) int scale) {
@@ -1838,13 +1400,16 @@ public class Table {
 				this.scale = Integer.valueOf(scale);
 			}
 
-			public int get() {
-				if(precision != null) return precision.intValue();
-				if(log.isDebugEnabled()) log.debug("precision or length not set, use default or max");
-				if(dataType.equals("CHARACTER") || dataType.equals("BIT")) return 1;
-				else if(dataType.equals("CHARACTER VARING") || dataType.equals("BIT VARING")) return Integer.MAX_VALUE;//without length specifier accepts strings of any size
-				else if(dataType.equals("TIME") || dataType.equals("TIMESTAMP")) return 6;//no explicit bound on precision
-				else throw new UnsupportedOperationException("data type not support");
+			public Integer get() {
+				if(!dataType.equals("BIT") && !dataType.equals("BIT VARING") && !dataType.equals("CHARACTER") && !dataType.equals("CHARACTER VARING")
+						&& !dataType.equals("INTERVAL") && !dataType.equals("NUMERIC") && !dataType.equals("TIME") && !dataType.equals("TIMESTAMP"))
+					throw new UnsupportedOperationException("data type not support");
+				if(precision == null) {
+					if(log.isDebugEnabled()) log.debug("precision or length not set, use default or max");
+					if(dataType.equals("CHARACTER") || dataType.equals("BIT")) return 1;
+					else if(dataType.equals("TIME") || dataType.equals("TIMESTAMP")) return 6;//no explicit bound on precision
+				}
+				return precision;
 			}
 
 			public void set(@Min(0) int length) {
@@ -1862,10 +1427,9 @@ public class Table {
 			}
 
 			public String[] names() {
-				if(names != null) return names;
 				if(!dataType.equals("ENUM"))
 					throw new UnsupportedOperationException("data type not support");
-				else return null;
+				return names;
 			}
 
 			public void set(String... names) {

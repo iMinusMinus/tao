@@ -90,7 +90,7 @@ public class SQLParser {
 		table = new Table(dialect);
 		BufferedReader br = null;
 		sb = new StringBuilder();
-		//remove comment, CR/*comment*/EATE syntax error could not be check! FIXME
+		//remove comment
 		analyze(is, charset, br);
 		if(log.isDebugEnabled())
 			log.debug(sb.toString());
@@ -131,7 +131,7 @@ public class SQLParser {
 					if(prev == '*' && type == CommentType.BLOCK && !literal) {
 						type = null;
 						ignore = false;
-						prev = SPACE;
+						prev = '/';
 						continue;
 					}
 					break;
@@ -170,7 +170,12 @@ public class SQLParser {
 					if(!ignore && !special)
 						literal = !literal;
 					break;
-				
+				default:
+					if(prev == '/' && !ignore) {//syntax error: CR/*comment*/EATE 
+						if(!isSpace((char) current))
+								throw new RuntimeException("bad sql, comment should not separate keywords");
+						prev = SPACE;
+					}
 				}
 				if(isSpace((char) prev) && isSpace((char) current)) {
 					prev = SPACE;
@@ -375,7 +380,9 @@ public class SQLParser {
 			type = "ARRAY";
 			precision = Integer.valueOf(dimension);
 		}
-		if(leftBracket > 0 && ("SET".equalsIgnoreCase(type.substring(0, leftBracket)) || "ENUM".equalsIgnoreCase(type.substring(0, leftBracket))))
+		if(leftBracket > 0 && ("SET".equalsIgnoreCase(type.substring(0, leftBracket))
+				|| "ENUM".equalsIgnoreCase(type.substring(0, leftBracket))
+				|| "ENUMERATED".equalsIgnoreCase(type.substring(0, leftBracket))))
 			enumerable = true;
 		if(enumerable) {//enum, set
 			names = type.substring(leftBracket + 1, rightBracket).split(",");
@@ -397,7 +404,43 @@ public class SQLParser {
 		for(int start = offset + len + 1; start < length;) {
 			String guess = nextWord(start, length);
 			start = start + guess.length() + 1;
-			if("INTERVAL".equals(type)) {
+			if("LONG".equals(type)) {
+				if("RAW".equalsIgnoreCase(guess))
+					type = "LONG RAW";
+			}
+			else if("DOUBLE".equals(type)) {
+				if("PRECISION".equalsIgnoreCase(guess))
+					type = "DOUBLE PRECISION";
+			}
+			else if("CHARACTER".equals(type)) {
+				if("VARING".equalsIgnoreCase(guess))
+					type = "CHARACTER VARING";
+				else if("LARGE".equalsIgnoreCase(guess)) {
+					if(start < length) {
+						guess = nextWord(start, length);
+						start = start + guess.length() + 1;
+					}	
+					if("OBJECT".equalsIgnoreCase(guess))
+						type = "CHARACTER LARGE OBJECT";
+				}
+			}
+			else if("BIT".equals(type)) {
+				if("VARING".equalsIgnoreCase(guess))
+					type = "BIT VARING";
+			}
+			else if("BINARY".equals(type)) {
+				if("VARING".equalsIgnoreCase(guess))
+					type = "BINARY VARING";
+				else if("LARGE".equalsIgnoreCase(guess)) {
+					if(start < length) {
+						guess = nextWord(start, length);
+						start = start + guess.length() + 1;
+					}	
+					if("OBJECT".equalsIgnoreCase(guess))
+						type = "BINARY LARGE OBJECT";
+				}
+			}
+			else if("INTERVAL".equals(type)) {
 				String prev = nextWord(start, length);
 				int __length = prev.length();
 				int lbracket = prev.indexOf("(");

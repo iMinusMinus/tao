@@ -23,8 +23,10 @@
  */
 package ml.iamwhatiam.tao.ddd;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -263,9 +265,38 @@ public class TransformationHelper {
 			return dataType2javaType((Table.Column.PostgresDataType) dataType);
 		else if(dataType instanceof Table.Column.OracleDataType)
 			return dataType2javaType((Table.Column.OracleDataType) dataType);
-		else {
-			throw new NotImplementedException("no data type to java type converter defined!");//TODO
+		else if(dataType instanceof Table.Column.StandardDataType) 
+			return dataType2javaType((Table.Column.StandardDataType) dataType);
+		log.error("no defined data type handler!");
+		return String.class;
+	}
+	
+	/**
+	 * transform standard data type to java type
+	 * 
+	 * @param dataType
+	 * @return
+	 */
+	public static Class<?> dataType2javaType(Table.Column.StandardDataType dataType) {
+		Class<?> javaType = String.class;
+		if(dataType.getDataType().equals("BOOLEAN")) javaType = Boolean.TYPE;
+		else if(dataType.getDataType().equals("SMALLINT") || dataType.getDataType().equals("INTEGER"))	javaType = Integer.TYPE;
+		else if(dataType.getDataType().equals("BIGINT")) javaType = Long.TYPE;
+		else if(dataType.getDataType().equals("FLOAT")) javaType = Float.TYPE;
+		else if(dataType.getDataType().equals("REAL") || dataType.getDataType().equals("DOUBLE PRECISION")) javaType = Double.TYPE;
+		else if(dataType.getDataType().equals("NUMERIC") || dataType.getDataType().equals("DECIMAL")) {
+			if(dataType.getScale() != null && dataType.getScale() == 0) {
+				if(dataType.getPrecision() != null && dataType.getPrecision() < 10) javaType = Integer.TYPE;
+				else if(dataType.getPrecision() != null && dataType.getPrecision() < 19 ) javaType = Long.TYPE;
+				else javaType = BigInteger.class;
+			} else javaType = BigDecimal.class;
 		}
+		else if(dataType.getDataType().equals("ENUMERATED")) javaType = Enum.class;
+		else if(dataType.getDataType().equals("DATE") || dataType.getDataType().equals("INTERVAL")
+				|| dataType.getDataType().equals("TIMESTAMP") || dataType.equals("TIME"))
+			javaType = Date.class;
+		else if(dataType.getDataType().indexOf("BINARY") >= 0) javaType = String.class;//may be byte[]
+		return javaType;
 	}
 	
 	/**
@@ -275,36 +306,37 @@ public class TransformationHelper {
 	 * @return java type
 	 */
 	private static Class<?> dataType2javaType(Table.Column.MySQLDataType dataType) {
-		Class<?> javaType = null;
-		if(dataType.equals("TINYINT")) javaType = Integer.TYPE;//maybe boolean
-		else if(dataType.equals("SMALLINT")) javaType = Integer.TYPE;
-		else if(dataType.equals("MEDIUMINT") || dataType.equals("INT")) {
+		Class<?> javaType = String.class;
+		if(dataType.getDataType().equals("TINYINT")) javaType = Integer.TYPE;//maybe boolean
+		else if(dataType.getDataType().equals("SMALLINT")) javaType = Integer.TYPE;
+		else if(dataType.getDataType().equals("MEDIUMINT") || dataType.getDataType().equals("INT")) {
 			if(dataType.isUnsigned()) javaType = Long.TYPE;
 			else javaType = Integer.TYPE;
 		}
-		else if(dataType.equals("BIGINT")) {
+		else if(dataType.getDataType().equals("BIGINT")) {
 			if(dataType.isUnsigned()) javaType = BigInteger.class;
 			else javaType = Long.TYPE;
 		}
-		else if(dataType.equals("DECIMAL")) {
-			if(dataType.getPrecision() < 10 && dataType.getScale() == 0) javaType = Integer.TYPE;
-			else if(dataType.getPrecision() < 19 && dataType.getScale() == 0) javaType = Long.TYPE;
-			else if(dataType.getScale() == 0) javaType = BigInteger.class;
+		else if(dataType.getDataType().equals("DECIMAL")) {
+			if(dataType.getScale() != null && dataType.getScale() == 0) {
+				if(dataType.getPrecision() != null && dataType.getPrecision() < 10) javaType = Integer.TYPE;
+				else if(dataType.getPrecision() != null && dataType.getPrecision() < 19 ) javaType = Long.TYPE;
+				else javaType = BigInteger.class;
+			}
 			else javaType = BigDecimal.class;
 		}
-		else if(dataType.equals("FLOAT")) javaType = Float.TYPE;
-		else if(dataType.equals("DOUBLE")) javaType = Double.TYPE;
-		else if(dataType.equals("BIT")) {
-			if(dataType.get() == 1) javaType = Boolean.TYPE; 
+		else if(dataType.getDataType().equals("FLOAT")) javaType = Float.TYPE;
+		else if(dataType.getDataType().equals("DOUBLE")) javaType = Double.TYPE;
+		else if(dataType.getDataType().equals("BIT")) {
+			if(dataType.get() != null && dataType.get() == 1) javaType = Boolean.TYPE; 
 			else javaType = byte[].class;
 		}
-		else if(dataType.equals("DATE") || dataType.equals("DATETIME") || dataType.equals("TIMESTAMP") || dataType.equals("TIME") || dataType.equals("YEAR"))
+		else if(dataType.getDataType().equals("DATE") || dataType.getDataType().equals("DATETIME") || dataType.getDataType().equals("TIMESTAMP") || dataType.equals("TIME") || dataType.equals("YEAR"))
 			javaType = Date.class;
-		else if(dataType.equals("ENUM")) javaType = Enum.class;
+		else if(dataType.getDataType().equals("ENUM")) javaType = Enum.class;
 		else if(dataType.equals("SET")) javaType = Set.class;
-		else if(dataType.equals("CHAR")) javaType = String.class;//maybe char[]
-		else if(dataType.equals("GEOMETRY")) javaType = String.class;//user defined java bean!
-		else javaType = String.class;
+		else if(dataType.getDataType().equals("CHAR")) javaType = String.class;//maybe char[]
+		else if(dataType.getDataType().equals("GEOMETRY")) javaType = String.class;//user defined java bean!
 		return javaType;
 	}
 	
@@ -315,24 +347,25 @@ public class TransformationHelper {
 	 * @return java type
 	 */
 	private static Class<?> dataType2javaType(Table.Column.PostgresDataType dataType) {
-		Class<?> javaType = null;
-		if(dataType.equals("SMALLSERIAL") || dataType.equals("SMALLINT")) javaType = Short.TYPE;
-		else if(dataType.equals("SERIAL") || dataType.equals("INTEGER")) javaType = Integer.TYPE;
-		else if(dataType.equals("BIGSERIAL") || dataType.equals("BIGINT")) javaType = Long.TYPE;
-		else if(dataType.equals("NUMERIC")) {
-			if(dataType.getPrecision() < 10 && dataType.getScale() == 0) javaType = Integer.TYPE;
-			else if(dataType.getPrecision() < 19 && dataType.getScale() == 0) javaType = Long.TYPE;
-			else if(dataType.getScale() == 0) javaType = BigInteger.class;
+		Class<?> javaType = String.class;
+		if(dataType.getDataType().equals("SMALLSERIAL") || dataType.getDataType().equals("SMALLINT")) javaType = Short.TYPE;
+		else if(dataType.getDataType().equals("SERIAL") || dataType.getDataType().equals("INTEGER")) javaType = Integer.TYPE;
+		else if(dataType.getDataType().equals("BIGSERIAL") || dataType.getDataType().equals("BIGINT")) javaType = Long.TYPE;
+		else if(dataType.getDataType().equals("NUMERIC")) {
+			if(dataType.getScale() != null && dataType.getScale() == 0) {
+				if(dataType.getPrecision() != null && dataType.getPrecision() < 10) javaType = Integer.TYPE;
+				else if(dataType.getPrecision() != null && dataType.getPrecision() < 19) javaType = Long.TYPE;
+				else javaType = BigInteger.class;
+			}
 			else javaType = BigDecimal.class;
 		}
-		else if(dataType.equals("REAL")) javaType = Float.TYPE;
-		else if(dataType.equals("DOUBLE PRECISION")) javaType = Double.TYPE;
-		else if(dataType.equals("DATE") || dataType.equals("TIME") || dataType.equals("TIMESTAMP")) javaType = Date.class;
-		else if(dataType.equals("BOOLEAN")) javaType = Boolean.TYPE;
-		else if(dataType.equals("ENUM")) javaType = Enum.class;
-		else if(dataType.equals("JSON")) javaType = String.class;//maybe JSONObject
-		else if(dataType.equals("LINE")) javaType = String.class;//geo type should be java bean
-		else javaType = String.class;
+		else if(dataType.getDataType().equals("REAL")) javaType = Float.TYPE;
+		else if(dataType.getDataType().equals("DOUBLE PRECISION")) javaType = Double.TYPE;
+		else if(dataType.getDataType().equals("DATE") || dataType.getDataType().equals("TIME") || dataType.getDataType().equals("TIMESTAMP")) javaType = Date.class;
+		else if(dataType.getDataType().equals("BOOLEAN")) javaType = Boolean.TYPE;
+		else if(dataType.getDataType().equals("ENUM")) javaType = Enum.class;
+		else if(dataType.getDataType().equals("JSON")) javaType = String.class;//maybe JSONObject
+		else if(dataType.getDataType().equals("LINE")) javaType = String.class;//geo type should be java bean
 		return javaType;
 	}
 	
@@ -343,19 +376,20 @@ public class TransformationHelper {
 	 * @return java type
 	 */
 	private static Class<?> dataType2javaType(Table.Column.OracleDataType dataType) {
-		Class<?> javaType = null;
-		if(dataType.equals("NUMBER")) {
-			if(dataType.getPrecision() < 10 && dataType.getScale() == 0) javaType = Integer.TYPE;
-			else if(dataType.getPrecision() < 19 && dataType.getScale() == 0) javaType = Long.TYPE;
-			else if(dataType.getScale() == 0) javaType = BigInteger.class;
+		Class<?> javaType = String.class;
+		if(dataType.getDataType().equals("NUMBER")) {
+			if(dataType.getScale() != null && dataType.getScale() == 0) {
+				if(dataType.getPrecision() != null && dataType.getPrecision() < 10) javaType = Integer.TYPE;
+				else if(dataType.getPrecision() != null && dataType.getPrecision() < 19) javaType = Long.TYPE;
+				else javaType = BigInteger.class;
+			}
 			else javaType = BigDecimal.class;
 		}
-		else if(dataType.equals("BINARY_FLOAT")) javaType = Float.TYPE;
-		else if(dataType.equals("BINARY_DOUBLE")) javaType = Double.TYPE;
-		else if(dataType.equals("DATE") || dataType.equals("TIMESTAMP")) javaType = Date.class;
-		else if(dataType.equals("BLOB")) javaType = String.class;//maybe byte[] or InputStream
-		else if(dataType.equals("BFILE")) javaType = String.class;//maybe File or URL
-		else javaType = String.class;
+		else if(dataType.getDataType().equals("BINARY_FLOAT")) javaType = Float.TYPE;
+		else if(dataType.getDataType().equals("BINARY_DOUBLE")) javaType = Double.TYPE;
+		else if(dataType.getDataType().equals("DATE") || dataType.getDataType().equals("TIMESTAMP")) javaType = Date.class;
+		else if(dataType.getDataType().equals("BLOB")) javaType = String.class;//maybe byte[] or InputStream
+		else if(dataType.getDataType().equals("BFILE")) javaType = String.class;//maybe File or URL
 		return javaType;
 	}
 	
@@ -367,7 +401,10 @@ public class TransformationHelper {
 		for(JavaBean.Property property : properties) {
 			if(property.getKlazz() == Set.class) 
 				form.addSelect(property2select(property));
-//			else if()
+			else if(property.getKlazz() == List.class)
+				form.addDatalist(property2datalist(property));
+			else if(property.getKlazz() == byte[].class)
+				form.addTextAreas(property2textArea(property));
 			else form.addInput(property2input(property));
 		}
 		return form;
@@ -383,23 +420,33 @@ public class TransformationHelper {
 	private static ViewModel.Select property2select(JavaBean.Property property) {
 		ViewModel.Select select = new ViewModel.Select();
 		select.setName(property.getName());
-		List<ViewModel.Option> options = new ArrayList<ViewModel.Option>();
 		Class<?> klazz = property.getKlazz();
-		//TODO
-		select.setOptions(options);
+		if(Set.class.isAssignableFrom(klazz)) {
+			for(Object obj : (Set<?>) property.getValue())
+				select.addOption(new ViewModel.Option("", ""));//FIXME
+		}
 		property.getDefaultValue();
 		
 		return select;
 	}
 	
 	private static ViewModel.DataList property2datalist(JavaBean.Property property) {
-		//TODO
-		return null;
+		ViewModel.DataList dataList = new ViewModel.DataList(property.getName());
+		if(List.class.isAssignableFrom(property.getKlazz())) {
+			for(Object obj : (List<?>) property.getValue())
+				dataList.addOption(new ViewModel.Option("", ""));//FIXME
+		}
+		return dataList;
 	}
 	
 	private static ViewModel.TextArea property2textArea(JavaBean.Property property) {
-		//TODO
-		return null;
+		ViewModel.TextArea textArea = new ViewModel.TextArea();
+		textArea.setName(property.getName());
+		if(property.getDefaultValue() != null)
+			textArea.setDefaultValue(String.valueOf(property.getDefaultValue()));
+		if(property.getValue() != null)
+			textArea.setValue(String.valueOf(property.getValue()));
+		return textArea;
 	}
 	
 	private static void constraint2attribute(ViewModel.Input owner, List<JavaBean.Constraint> constraints) {
@@ -442,7 +489,11 @@ public class TransformationHelper {
 			type = ViewModel.Input.Type.DATETIME;
 		else if(Collection.class.isAssignableFrom(klazz))
 			type = ViewModel.Input.Type.CHECKBOX;
-		//TODO
+		else if(File.class.isAssignableFrom(klazz))
+			type = ViewModel.Input.Type.FILE;
+		else if(URL.class.isAssignableFrom(klazz))//regexp
+			type = ViewModel.Input.Type.URL;
+		//TODO other type
 		return type;
 	}
 	
