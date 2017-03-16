@@ -623,7 +623,7 @@ public class SQLParser {
 		String[] columnNames = findColumnNames();
 		Table.Column[] columns = new Table.Column[columnNames.length];
 		for(int i = 0; i < columnNames.length; i++) {
-			columns[i] = new Table.Column(columnNames[i], null);
+			columns[i] = new Table.Column(columnNames[i], fk.getColumns()[i].getDataType());
 			columns[i].setTable(reference);
 		}
 		fk.setReferences(columns);
@@ -784,7 +784,7 @@ public class SQLParser {
 				String[] refColumns = findColumnNames();
 				Table.Column[] cols = new Table.Column[refColumns.length];
 				for(int i = 0; i <  refColumns.length; i++) {
-					cols[i] = new Table.Column(refColumns[i], null);
+					cols[i] = new Table.Column(refColumns[i], constraint.getColumns()[i].getDataType());
 					cols[i].setTable(reference);
 				}
 				((Table.ForeignKey) constraint).setReferences(cols);
