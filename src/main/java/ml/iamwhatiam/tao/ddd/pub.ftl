@@ -9,7 +9,11 @@
 	</#list>
 </#macro>
 <#function  getSimpleName name>
-	<#return name?keep_after_last(".")>
+	<#if name?contains(".")>
+		<#return name?keep_after_last(".")>
+	<#else>
+		<#return name>
+	</#if>		
 </#function >
 <#macro license>
 /**
