@@ -547,7 +547,27 @@ public class SQLParser {
 			}
 			dataType = oracle;
 			break;
-		default://TODO	
+		default:
+			log.info("no such dialect data type handler, use default");
+			Table.Column.StandardDataType iso = new Table.Column.StandardDataType(type);
+			if(precision != null) {
+				if(scale != null)
+					iso.set(precision.intValue(), scale.intValue());
+				else iso.set(precision.intValue());
+			}
+			if(intervalType != null) {
+				if(iPrecision != null && iScale != null)
+					iso.set(iPrecision.intValue(), intervalType.intValue(), iScale.intValue());
+				else if(iPrecision != null)
+					iso.set(iPrecision.intValue(), intervalType.intValue(), 0);
+				else iso.set(intervalType.intValue());
+			}
+			if(withTimeZone != null) {
+				if(precision != null)
+					iso.set(precision.intValue(), withTimeZone.booleanValue());
+				else iso.set(withTimeZone.booleanValue());
+			}
+			dataType = iso;
 		}
 		return dataType;
 	}
@@ -584,25 +604,23 @@ public class SQLParser {
 			match(nextWord(), "FOREIGN");
 			match(nextWord(), "KEY");
 		}
-		else if(constraint instanceof Table.Check) {
-			addConstraint((Table.Check) constraint);
-			return;
+		if(constraint instanceof Table.Check) {
+			parseCheck((Table.Check) constraint);
 		}
-		String[] columnNames = findColumnNames();
-		Table.Column[] columns = new Table.Column[columnNames.length];
-		for(int i = 0; i < columnNames.length; i++)
-			columns[i] = findColumn(columnNames[i]);
-		constraint.setColumns(columns);
+		else {
+			String[] columnNames = findColumnNames();
+			Table.Column[] columns = new Table.Column[columnNames.length];
+			for(int i = 0; i < columnNames.length; i++)
+				columns[i] = findColumn(columnNames[i]);
+			constraint.setColumns(columns);
+		}
 		if(constraint instanceof Table.ForeignKey) {
 			parseForeignKey((Table.ForeignKey) constraint);
 		}
 		else if(constraint instanceof Table.Index) {
 			parseIndex((Table.Index) constraint);
 		}
-		else if(constraint instanceof Table.Check) {
-			parseCheck((Table.Check) constraint);
-		}
-		else addConstraint(constraint);//common process
+		addConstraint(constraint);//common process
 		position = origin;
 	}
 	
@@ -627,7 +645,6 @@ public class SQLParser {
 			columns[i].setTable(reference);
 		}
 		fk.setReferences(columns);
-		table.addConstraint(fk);
 	}
 	
 	protected void parseIndex(Table.Index index) {
@@ -635,7 +652,6 @@ public class SQLParser {
 		if("USING".equalsIgnoreCase(guess)) {
 			index.setAlgorithm(nextWord());
 		}
-		table.addConstraint(index);
 	}
 	
 	protected void parseCheck(Table.Check check) {
@@ -650,8 +666,10 @@ public class SQLParser {
 				deep--;
 				if(deep == 0) {
 					rb = position;
+					Table.Column[] clumns = new Table.Column[1];
+					clumns[0] = findColumn(nextWord(lb + 1, rb - 1));
+					check.setColumns(clumns);
 					check.setSearchCondition(sb.substring(lb + 1, rb));
-					table.addConstraint(check);
 					break;
 				}
 			}
@@ -765,16 +783,20 @@ public class SQLParser {
 				match(nextWord(), "KEY");
 				constraint = table.new ForeignKey();
 			}
-			else if("CHECK".equalsIgnoreCase(unknow)) {//FIXME
+			else if("CHECK".equalsIgnoreCase(unknow)) {
 				constraint = table.new Check();
 			}
 			constraint.setName(name);
-			String[] columnNames = findColumnNames();
-			Table.Column[] columns = new Table.Column[columnNames.length];
-			for(int i = 0; i <  columnNames.length; i++) {
-				columns[i] = findColumn(columnNames[i]);
+			if("CHECK".equalsIgnoreCase(unknow)) {
+				parseCheck((Table.Check) constraint);
+			} else {
+				String[] columnNames = findColumnNames();
+				Table.Column[] columns = new Table.Column[columnNames.length];
+				for(int i = 0; i <  columnNames.length; i++) {
+					columns[i] = findColumn(columnNames[i]);
+				}
+				constraint.setColumns(columns);
 			}
-			constraint.setColumns(columns);
 			if("FOREIGN".equalsIgnoreCase(unknow)) {
 				if(position < sb.length() && sb.charAt(position) == SPACE)
 					position++;
@@ -789,7 +811,7 @@ public class SQLParser {
 				}
 				((Table.ForeignKey) constraint).setReferences(cols);
 			}
-			table.addConstraint(constraint);
+			addConstraint(constraint);
 			position++;
 		}
 		else if("COMMENT".equalsIgnoreCase(test)){
@@ -809,9 +831,8 @@ public class SQLParser {
 		if("UNIQUE".equalsIgnoreCase(test))
 			test = nextWord();
 		if(!"INDEX".equalsIgnoreCase(test)) {//synonym
-			for(; position < sb.length(); position++)
-				if(sb.charAt(position) == ';')
-					return;
+			skip();
+			return;
 		}
 		Table.Index index = table.new Index();
 		String unknow = nextWord();
