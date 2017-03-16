@@ -92,8 +92,9 @@ public class ReflectionUtils {
      * @return Class
      */
     public static Class<?> findClass(String clazz, ClassLoader loader) {
-        if (primitive.get(clazz) != null)
-            return primitive.get(clazz);
+    	Class<?> primitiveType = primitive.get(clazz);
+        if (primitiveType != null)
+            return primitiveType;
         try {
             return Class.forName(clazz, true, loader);
         } catch (ClassNotFoundException e) {
@@ -221,34 +222,14 @@ public class ReflectionUtils {
      * @param clazz class name
      * @param methodName method name
      * @param parameterTypes parameter types
-     * @param parameters json parameter
+     * @param parameters parameter array
      * @return the result after invoke method
      */
-    public static Object invokeMethod(String clazz, String methodName, List<String> parameterTypes, String parameters) {
-        return invokeMethod(newInstance(clazz), methodName, parameterTypes, parameters);
-    }
-    
-    /**
-     * @see #invokeMethod(Method, Object, Object[])
-     * @param target mostly, a spring bean
-     * @param methodName method name
-     * @param parameterTypes parameter types
-     * @param parameters json parameter
-     * @return the result after invoke method
-     */
-    public static Object invokeMethod(Object target, String methodName, List<String> parameterTypes, String parameters) {
-        Method method = findMethod(target.getClass(), methodName, parameterTypes);
-        Object[] args = new Object[parameterTypes.size()];
-        Class<?>[] classes = new Class<?>[parameterTypes.size()];
-        for(int i = 0; i < classes.length; i++) {
-            classes[i] = findClass(parameterTypes.get(i));
-        }
-        try {
-            args = JsonUtils.parse(parameters, classes);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-        return invokeMethod(method, target, args);
+    public static Object invokeMethod(String clazz, String methodName, List<String> parameterTypes, Object[] parameters) {
+    	Class<?> klazz = findClass(clazz);
+        Object target = newInstance(klazz);
+        Method method = findMethod(klazz, methodName, parameterTypes);
+        return invokeMethod(method, target, parameters);
     }
     
     /**

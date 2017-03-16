@@ -23,7 +23,11 @@
  */
 package ml.iamwhatiam.tao.util;
 
+import java.util.Arrays;
+
+import org.junit.Assert;
 import org.junit.Test;
+
 
 /**
  * @author iMinusMinus
@@ -34,7 +38,14 @@ public class ReflectionUtilsTest {
 	
 	@Test
 	public void testFindClass() {
-		
+		Assert.assertNotNull(ReflectionUtils.findClass("ml.iamwhatiam.tao.ddd.Table$Column$MySQLDataType"));
+	}
+	
+	@Test
+	public void testInvokeMethod() {
+		String[] args = {"camel_case"};
+		Assert.assertEquals("camelCase", 
+				ReflectionUtils.invokeMethod("ml.iamwhatiam.tao.ddd.TransformationHelper", "snake2camel", Arrays.asList("java.lang.String"), args));
 	}
 
 }
