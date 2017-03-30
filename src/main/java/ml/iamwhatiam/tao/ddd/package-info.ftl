@@ -21,11 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-@Generated(value = {"ml.iamwhatiam.tao.ddd.CodeGen"})
-package ml.iamwhatiam.tao.ddd;
+@Generated(value = {"ml.iamwhatiam.tao.ddd.CodeGen"}, date = "${date?datetime?string.iso}")
+package ml.iamwhatiam.tao.ddd.${namespace};
 
 import javax.annotation.Generated;
 
 /**
- * sub packages are generated!
+ * classes under this packages are generated!
  */
