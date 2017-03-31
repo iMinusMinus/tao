@@ -210,7 +210,7 @@ public class ReflectionUtils {
                 c.setAccessible(true);
                 return (T) c.newInstance(outter);
             }
-            return clazz.newInstance();
+            return clazz.newInstance();//if constructor is private, throw SecurityException, or use newInstance0
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return null;
@@ -218,7 +218,7 @@ public class ReflectionUtils {
     }
     
     /**
-     * @see #invokeMethod(Object, String, List, String)
+     * @see #invokeMethod(Method, Object, Object[])
      * @param clazz class name
      * @param methodName method name
      * @param parameterTypes parameter types
@@ -230,6 +230,21 @@ public class ReflectionUtils {
         Object target = newInstance(klazz);
         Method method = findMethod(klazz, methodName, parameterTypes);
         return invokeMethod(method, target, parameters);
+    }
+    
+    /**
+     * @see #invokeMethod(Method, Object, Object[])
+     * @param method
+     * @param args
+     * @return
+     */
+    public static Object invokeMethod(Method method, Object[] args) {
+    	Class<?> klazz = method.getDeclaringClass();
+    	Object target = null;
+    	if((method.getModifiers() & Modifier.STATIC) != 0)
+    		target = klazz;
+    	else target = newInstance(klazz);
+    	return invokeMethod(method, target, args);
     }
     
     /**
