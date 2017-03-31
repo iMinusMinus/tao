@@ -201,6 +201,11 @@ public class JavaBean implements Serializable {
 		 */
 		private List<Constraint> constraints;
 		
+		/**
+		 * inner bean
+		 */
+		private JavaBean bean;
+		
 		public Property(String name, Class<?> javaType) {
 			this.klazz = javaType;
 			if(keywords.contains(name)) {
@@ -273,6 +278,14 @@ public class JavaBean implements Serializable {
 
 		public void setConstraints(List<Constraint> constraints) {
 			this.constraints = constraints;
+		}
+
+		public JavaBean getBean() {
+			return bean;
+		}
+
+		public void setBean(JavaBean bean) {
+			this.bean = bean;
 		}
 		
 	}

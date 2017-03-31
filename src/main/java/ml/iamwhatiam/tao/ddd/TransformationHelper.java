@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +51,7 @@ import org.slf4j.LoggerFactory;
 
 import ml.iamwhatiam.tao.constraints.Enumeration;
 import ml.iamwhatiam.tao.util.ReflectionUtils;
+import ml.iamwhatiam.tao.vo.Form;
 
 /**
  * transform from relation data to java bean;
@@ -116,6 +118,7 @@ public class TransformationHelper {
 		if(table.getDialect() != Dialect.POSTGRES)//pg case sensitive
 			name = name.toLowerCase();
 		JavaBean bean = new JavaBean(snake2camel(name));
+		List<Table.ForeignKey> fks = table.getFks();
 		Map<String, List<JavaBean.Constraint>> constraints = new HashMap<String, List<JavaBean.Constraint>>();
 		if(table.getChecks() != null)
 			for(Table.Check check : table.getChecks()) {
@@ -128,11 +131,22 @@ public class TransformationHelper {
 					constraints.put(key, list);
 				}
 			}
+		Set<Table> properties = new HashSet<Table>();
 		for(Table.Column column : table.getColumns()) {
-			JavaBean.Property property = column2property(bean, column);
+			JavaBean.Property property = null;
+			Table reference = getReferenceTable(fks, column);
+			if(reference != null) {
+				//if one to many, List<JavaBean>; if one to one, JavaBean; if many to many/one, JavaBean
+				property = bean.new Property(snake2camel(reference.getName()), JavaBean.class);
+				property.setBean(table2bean(reference));//XXX cannot hold multiply table info
+				properties.add(reference);
+			} else {
+				property = column2property(bean, column);
+			}	
 			if(constraints.get(column.getName()) != null)
 				property.setConstraints(constraints.get(column.getName()));
-			bean.addProperty(property);
+			if(!properties.contains(reference))
+				bean.addProperty(property);
 		}
 		return bean;
 	}
@@ -159,6 +173,16 @@ public class TransformationHelper {
 			property.setType(primitive2wrapper(property.getType()));
 		}
 		return property;
+	}
+	
+	private static Table getReferenceTable(List<Table.ForeignKey> fks, Table.Column column) {
+		if(fks != null && !fks.isEmpty()) {
+			for(Table.ForeignKey fk : fks)
+				for(Table.Column col : fk.getColumns())
+					if(col == column)
+						return fk.getReferences()[0].getTable();
+		}
+		return null;
 	}
 	
 	private static boolean isPrimitive(String type) {
@@ -421,20 +445,18 @@ public class TransformationHelper {
 		ViewModel.Select select = new ViewModel.Select();
 		select.setName(property.getName());
 		Class<?> klazz = property.getKlazz();
-		if(Set.class.isAssignableFrom(klazz)) {
-			for(Object obj : (Set<?>) property.getValue())
-				select.addOption(new ViewModel.Option("", ""));//FIXME
+		if(Set.class.isAssignableFrom(klazz) && property.getValue() != null) {
+			for(Form prop : (Set<Form>) property.getValue())
+				select.addOption(new ViewModel.Option(prop.getAlt(), prop.getOid()));
 		}
-		property.getDefaultValue();
-		
 		return select;
 	}
 	
 	private static ViewModel.DataList property2datalist(JavaBean.Property property) {
 		ViewModel.DataList dataList = new ViewModel.DataList(property.getName());
-		if(List.class.isAssignableFrom(property.getKlazz())) {
-			for(Object obj : (List<?>) property.getValue())
-				dataList.addOption(new ViewModel.Option("", ""));//FIXME
+		if(List.class.isAssignableFrom(property.getKlazz()) && property.getValue() != null) {
+			for(Form prop : (List<Form>) property.getValue())
+				dataList.addOption(new ViewModel.Option(prop.getAlt(), prop.getOid()));
 		}
 		return dataList;
 	}

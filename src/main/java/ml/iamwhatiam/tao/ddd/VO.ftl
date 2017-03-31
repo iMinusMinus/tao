@@ -7,6 +7,8 @@ import java.io.Serializable;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlRootElement;
+
+import ml.iamwhatiam.tao.vo.Form;
 <#if bean.imports??>
 <#list bean.imports as im>
 import ${im};
@@ -24,7 +26,7 @@ import ${im};
  */
 @XmlRootElement(name = "${bean.name}")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ${bean.name?cap_first}VO implements Serializable {
+public class ${bean.name?cap_first}VO extends Form implements Serializable {
  
  	private static final long serialVersionUID = 1L;
  	
