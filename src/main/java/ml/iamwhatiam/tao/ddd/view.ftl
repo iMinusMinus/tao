@@ -23,9 +23,34 @@
 		<![endif]-->
 	</head>
 	<body>
-		<form name="${form.name!"query"}" action="${form.action}">
-		<#if form.inputs??>
-			<#list form.inputs as input>
+		<div id="header">
+			<ul id="nav">
+			<#noparse>
+			<c:forEach item="${view.menu}" var="item">
+				<li><a href="${item.menu.href}">${item.menu.name}</a>
+					<if test="${!empty item.menu.children}">
+					<ul>
+						<c:forEach item="${item.menu.children}" var="child">
+						<li><a href="${child.menu.href}">${child.menu.name}</a>
+						<if test="${!empty child.menu.children}">
+						<ul>
+							<c:forEach item="${child.menu.children}" var="successor">
+							<li><a href="${successor.menu.href}">${successor.menu.name}</a></li>
+							</c:forEach>
+						</ul>
+						</c:if>
+						</li>
+						</c:forEach>
+					</ul>
+					</if>
+				</li>
+			</c:forEach>
+			</#noparse>
+			</ul>
+		</div>
+		<form name="${view.form.name!"query"}" action="${view.form.action}">
+		<#if view.form.inputs??>
+			<#list view.form.inputs as input>
 			<#-- label -->
 			<input name="${input.name}" type="${input.type}" <#if input.value??>value="${input.value}" </#if><#rt>
 			<#lt><#if input.maxLength??>maxlength="${input.maxLength}" </#if><#rt>
@@ -40,8 +65,8 @@
 			<#lt>>
 			</#list>
 		</#if>
-		<#if form.selects>
-			<#list form.selects as select>
+		<#if view.form.selects>
+			<#list view.form.selects as select>
 			<select name="${select.name}">
 			<#if select.options??>
 				<#list select.options as option>
@@ -65,7 +90,7 @@
 				
 			</tbody>
 		</table>
-		<iframe name="download" src="" class="hidden"></iframe>
+		<iframe name="download" src="" class="hidden">IFRAME NOT SUPPORT IF YOU SAW THIS TEXT.</iframe>
 <#break>
 <#case "extjs">
 
@@ -99,8 +124,17 @@
 		<title>${view.title}</title>
 	</head>
 	<body>
-	
-	
+		<header>
+			<nav>
+			
+			</nav>
+		</header>
+		<section id="main">
+		
+		</section>
+		<footer>
+		
+		</footer>
 </#switch>
 	</body>
 </html>
