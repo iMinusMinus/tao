@@ -4,6 +4,9 @@
 <#if config?contains("iBatis")>
 <#assign ROOT = "sqlMap">
 <#assign TYPE = "class">
+<#assign ID = "result">
+<#assign ONE_TO_ONE = "association"><#-- @see http://www.mybatis.org/mybatis-3/zh/sqlmap-xml.html#Auto-mapping -->
+<#assign ONE_TO_MANY = "collection">
 <#assign PARAMETER_TYPE = "parameterClass">
 <#assign START_TAG = "#">
 <#assign END_TAG = "#">
@@ -23,6 +26,9 @@
 <#else>
 <#assign ROOT = "mapper">
 <#assign TYPE = "type">
+<#assign ID = "id">
+<#assign ONE_TO_ONE = "result">
+<#assign ONE_TO_MANY = "result">
 <#assign PARAMETER_TYPE = "parameterType"><#-- parameterMap is deprecated -->
 <#assign START_TAG = "#{">
 <#assign END_TAG = "}">
@@ -54,7 +60,15 @@
 	<#list table.columns as column>
 		<#list bean.properties as property>
 		<#if property.name?upper_case == column.name?replace('_', '')?upper_case>
+		<#if property.name == "oid">
+		<${ID} property="oid" column="id" javaType="long" />
+		<#elseif property.type is Domain>
+		<${ONE_TO_ONE} property="${property.name}" resultMap="${namespace}.${ResultMap}" columnPrefix="${column.referencesTable.name}" />
+		<#elseif property.type is Collection or Array>
+		<${ONE_TO_MANY} property="${property.name}" javaType="java.util.ArrayList" column="${column.name}" select="${selectId}" />
+		<#else>
 		<result column="${column.name}" property="${property.name}" javaType="${property.type}" /><!-- jdbcType=${column.dataType} -->
+		</#if>
 		</#if>
 		</#list>
 	</#list>

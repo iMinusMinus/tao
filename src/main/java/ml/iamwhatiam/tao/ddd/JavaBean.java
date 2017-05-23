@@ -57,7 +57,7 @@ public class JavaBean implements Serializable {
         keywords.add("class");
         keywords.add("interface");
         keywords.add("import");
-        keywords.add("extend");
+        keywords.add("extends");
         keywords.add("implements");
         keywords.add("public");
         keywords.add("protected");
@@ -95,6 +95,9 @@ public class JavaBean implements Serializable {
         keywords.add("throw");
         keywords.add("throws");
         keywords.add("new");
+        keywords.add("true");
+        keywords.add("false");
+        keywords.add("null");
         keywords.add("instanceof");
         keywords.add("synchronized");
         keywords.add("super");
