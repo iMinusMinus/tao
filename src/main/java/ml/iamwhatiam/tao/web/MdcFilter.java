@@ -41,6 +41,8 @@ import ml.iamwhatiam.tao.util.ID;
 /**
  * Application trace id.refer Google Dapper, Ali eagle eye. In Ali eagle, there are two kinds of thread local id:
  * trace id and rpc id. A successor rpc id take caller rpc id as prefix.
+ * @web.filter name="mdc"
+ * @web.filter-init-param name="mdcKey" value="tid"
  * 
  * @author iMinusMinus
  * @version 0.0.1
