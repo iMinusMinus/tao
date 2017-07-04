@@ -21,26 +21,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package ml.iamwhatiam.tao.service;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import ml.iamwhatiam.tao.domain.Request;
+package ml.iamwhatiam.tao.rpc;
 
 /**
- * abstract local service!
+ * Uncategorized RPC exception.
+ * Usually: InvalidArgumentException, TimeoutException, IllegalOperationException.
  * 
  * @author iMinusMinus
- * @since 2016-12-06
  * @version 0.0.1
+ * @since 2017-07-04
+ *
  */
-public abstract class AbstractLocalService {
+public class RpcException extends Exception {
+
+	private static final long serialVersionUID = 1L;
 	
-	protected Logger log = LoggerFactory.getLogger(getClass());
+	public RpcException() {
+		super();
+	}
 	
-	protected void store(Request req) {//store request to mongo db
-		
+	public RpcException(String message) {
+		super(message);
+	}
+	
+	public RpcException(String message, Exception except) {
+		super(message, except);
+	}
+	
+	public RpcException(Exception except) {
+		super(except);
 	}
 
 }
