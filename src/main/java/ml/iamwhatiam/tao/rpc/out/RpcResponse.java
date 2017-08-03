@@ -21,56 +21,51 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package ml.iamwhatiam.tao.rpc;
+package ml.iamwhatiam.tao.rpc.out;
 
 import java.io.Serializable;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-
 /**
- * RPC request base information.
+ * RPC response abstract information.
  * 
  * @author iMinusMinus
  * @version 0.0.1
+ * @since 2017-08-03
  *
  */
-public abstract class RpcRequest implements Serializable {
+public abstract class RpcResponse implements Serializable {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -4868293296683992671L;
 	
 	/**
-	 * business flow id, may be one transaction one id
+	 * request transaction id for asynchronous request
 	 */
-	@NotNull
-	@Size(max = 32)
-	protected String transactionId;
+	protected String originId;
 	
 	/**
-	 * serial number, change it every time. Increase it when transaction id is same!
+	 * receipt id
 	 */
-	@NotNull
-	protected long serial;
+	protected String receiptId;
 
-	public String getTransactionId() {
-		return transactionId;
+	public String getOriginId() {
+		return originId;
 	}
 
-	public void setTransactionId(String transactionId) {
-		this.transactionId = transactionId;
+	public void setOriginId(String originId) {
+		this.originId = originId;
 	}
 
-	public long getSerial() {
-		return serial;
+	public String getReceiptId() {
+		return receiptId;
 	}
 
-	public void setSerial(long serial) {
-		this.serial = serial;
+	public void setReceiptId(String receiptId) {
+		this.receiptId = receiptId;
 	}
-
+	
 	@Override
 	public String toString() {
-		return "transactionId: \"" + transactionId + "\", serial=" + serial + ", ";
+		return "\"originId\":\"" + originId + "\", \"receiptId\":\"" + receiptId +"\"";
 	}
 
 }
