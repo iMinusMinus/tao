@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package ml.iamwhatiam.tao.rpc;
+package ml.iamwhatiam.tao.rpc.in;
 
 import java.io.Serializable;
 
