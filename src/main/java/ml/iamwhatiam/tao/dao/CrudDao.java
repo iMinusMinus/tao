@@ -18,7 +18,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN0 THE
  * SOFTWARE.
  */
 package ml.iamwhatiam.tao.dao;
@@ -26,7 +26,8 @@ package ml.iamwhatiam.tao.dao;
 import java.util.List;
 
 /**
- * basic dal: CRUD
+ * basic dao: CRUD.
+ * Mybatis scanner can take it as a mark!
  * 
  * @author iMinusMinus
  * @since 2017-02-09
@@ -35,19 +36,62 @@ import java.util.List;
  */
 public interface CrudDao<T> {
 	
+	/**
+	* fetch all rows
+	* @return entire table data
+	*/
 	List<T> findAll();
 	
+	/**
+	* fetch qualified rows in range
+	* @param condition query condition
+	* @param offset skip some data
+	* @param limit fetch less than {@code limit}
+	* @return qualified data start with {@code offset} and end with {@code offset + limit}
+	*/
 	List<T> query(T condition, int offset, int limit);
 	
+	/**
+	* count qualified rows
+	* @param condition query condition
+	* @return how many rows can we fetch
+	*/
 	long count(T condition);
 	
+	/**
+	* fetch a row by id
+	* @param id table primary key
+	* @return one row at most
+	*/
 	T findOne(long id);
 	
+	/**
+	* fetch a row by unique index or other which can be identified
+	* @param domain include query condition can tell one and other apart
+	* @return one row, if more than one, exception will be thrown
+	*/
+	T findOne(T domain);
+	
+	/**
+	* persist data and return id
+	* @param domain data to persist
+	* @return row id
+	*/
 	long save(T domain);
 	
-	boolean update(T domain);
+	/**
+	* update fields by id
+	* @param domain fields to update and id to tell apart
+	* @return rows affected
+	*/
+	int update(T domain);
 	
-	boolean delete(long id);
+	/**
+	* delete one row by id(may be logic delete).
+	* @param id row id
+	* @return rows affected
+	*/
+	int delete(long id);
 	
 	//boolean delete(T domain);
 
