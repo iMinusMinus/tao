@@ -63,12 +63,13 @@ public interface CrudDao<T> {
 	* @param id table primary key
 	* @return one row at most
 	*/
-	T findOne(long id);
+	T findById(long id);
 	
 	/**
 	* fetch a row by unique index or other which can be identified
 	* @param domain include query condition can tell one and other apart
-	* @return one row, if more than one, exception will be thrown
+	* @return one row
+	* @throw TooManyResultsException if more than one result
 	*/
 	T findOne(T domain);
 	
