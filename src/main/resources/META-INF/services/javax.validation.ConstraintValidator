@@ -1,0 +1,4 @@
+# Hibernate Validator allows to utilize Java’s ServiceLoader mechanism to register additional constraint definitions.
+# Remain @javax.validation.Constraint(validatedBy = {}) on your constraint annotation!
+# If no Bean Validation provider could be found, Spring throws exception.
+# Apache BVal not support yet under version 1.1.2!
