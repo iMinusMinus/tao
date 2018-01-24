@@ -2,6 +2,9 @@
 <@software.license />
 
 package ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.domain</#if>;
+
+<#if config?contains("lombok")>import lombok.Getter;
+import lombok.Setter;</#if>
  
 import ml.iamwhatiam.tao.domain.Taichi;
 <#if bean.imports??>
@@ -19,6 +22,8 @@ import ${im};
  * @version 0.0.1
  *
  */
+<#if config?contains("lombok")>@Getter
+@Setter</#if>
 public class ${bean.name?cap_first}Domain extends Taichi {
  
     private static final long serialVersionUID = 1L;
@@ -37,6 +42,7 @@ public class ${bean.name?cap_first}Domain extends Taichi {
  	private ${software.getSimpleName(property.type)} ${property.name}<#if (property.defaultValue)??> = <#if property.defaultValue?is_string>"</#if>${property.defaultValue}<#if property.defaultValue?is_string>"</#if></#if>;
  	
  	</#list>
+ 	<#if !config?contains("lombok")>
  	<#list bean.properties as property>
  	public ${software.getSimpleName(property.type)} <#if property.type == "boolean">is<#else>get</#if>${property.name?cap_first}() {
  		return ${property.name};
@@ -46,6 +52,7 @@ public class ${bean.name?cap_first}Domain extends Taichi {
  		this.${property.name} = ${property.name};
  	}
  	</#list>
+ 	<#/if>
  	
  	@Override
  	public String toString() {

@@ -8,6 +8,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlRootElement;
 
+<#if config?contains("lombok")>import lombok.Getter;
+import lombok.Setter;</#if>
+
 import ml.iamwhatiam.tao.vo.Form;
 <#if bean.imports??>
 <#list bean.imports as im>
@@ -24,6 +27,8 @@ import ${im};
  * @version 0.0.1
  *
  */
+<#if config?contains("lombok")>@Getter
+@Setter</#if>
 @XmlRootElement(name = "${bean.name}")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ${bean.name?cap_first}VO extends Form implements Serializable {
@@ -44,6 +49,7 @@ public class ${bean.name?cap_first}VO extends Form implements Serializable {
  	private ${software.getSimpleName(property.type)} ${property.name}<#if (property.defaultValue)??> = <#if property.defaultValue?is_string>"</#if>${property.defaultValue}<#if property.defaultValue?is_string>"</#if></#if>;
  	
  	</#list>
+ 	<#if !config?contains("lombok")>
  	<#list bean.properties as property>
  	public ${software.getSimpleName(property.type)} <#if property.type == "boolean">is<#else>get</#if>${property.name?cap_first}() {
  		return ${property.name};
@@ -53,6 +59,7 @@ public class ${bean.name?cap_first}VO extends Form implements Serializable {
  		this.${property.name} = ${property.name};
  	}
  	</#list>
+ 	</#if>
  	
  	@Override
  	public String toString() {

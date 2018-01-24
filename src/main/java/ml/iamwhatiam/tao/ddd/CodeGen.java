@@ -112,8 +112,8 @@ public final class CodeGen {
 	
 	public CodeGen() {
 		policy = GeneratePolicy.SOURCE;
-		tpls = new String[] {"Controller.ftl", "ServiceImpl.ftl", "DAOImpl.ftl", "VO.ftl", "Domain.ftl", "sqlMap.ftl", "TransformationHelper.ftl", "package-info.ftl"};
-		dirs = new String[] {"web", "service", "dao", "vo", "domain", "mapper", "support", ""};
+		tpls = new String[] {"Controller.ftl", "ServiceImpl.ftl", "DAO.ftl", "DAOImpl.ftl", "VO.ftl", "Domain.ftl", "sqlMap.ftl", "TransformationHelper.ftl", "package-info.ftl"};
+		dirs = new String[] {"web", "service", "dao", "dao/impl", "vo", "domain", "mapper", "support", ""};
 		target = "src/main/java/ml/iamwhatiam/tao/ddd";
 		withClassNamePrefix = true;
 		convension = new Convension() {
@@ -127,6 +127,7 @@ public final class CodeGen {
 			public boolean useIbatis() {return true;}
 			public boolean useMyBatis() {return false;}
 			public boolean useHibernate() {return false;}
+			public boolean useLombok() {return false;}
 			public String list() {return "[SpringMVC, Spring, iBatis]";}
 		};
 	}
@@ -206,7 +207,7 @@ public final class CodeGen {
 			System.out.println("-d, --dialect                specify sql dialect. MYSQL, POSTGRES, ORACLE, DB2, MS_SQL, SYBASE, INFOMIX expected.");
 			System.out.println("-t, --target                 which directory generated fiels will be place in. if not specified, use /ml/iamwhatiam/tao/ddd.");
 			System.out.println("-n, --namespace              parent package of generated files. use table.schema or table.catalog by default.");
-			System.out.println("-c, --config                 Annotation: 1, XML: 2, SpringMVC: 4, Spring: 8, iBatis: 16, Struts: 32, MyBatis: 64, Hibernate: 128");
+			System.out.println("-c, --config                 Annotation: 1, XML: 2, SpringMVC: 4, Spring: 8, iBatis: 16, Struts: 32, MyBatis: 64, Hibernate: 128, Lombok : 256");
 			System.out.println("-m, --mapping                how sql data type mapping to java type. for example: TINYINT=byte;NUMBER=java.math.BigDecimal.");
 			System.out.println("-s, --simple                 1: no VO only DO, 2: no Controller, 4: no Service, 8: VO, DO, Controller, Service, DAO and sqlMap in same package");
 		}
@@ -244,6 +245,7 @@ public final class CodeGen {
 				final boolean useStruts = (enabled & 32) != 0;
 				final boolean useMyBatis = (enabled & 64) != 0;
 				final boolean useHibernate = (enabled & 128) != 0; 
+				final boolean useLombok = (enabled & 256) != 0;
 				Framework framework = new Framework() {
 					public boolean useSpringMvc() {return useSpringMvc;}
 					public boolean useStruts() {return useStruts;}
@@ -251,6 +253,7 @@ public final class CodeGen {
 					public boolean useIbatis() {return useIbatis;}
 					public boolean useMyBatis() {return useMyBatis;}
 					public boolean useHibernate() {return useHibernate;}
+					public boolean useLombok() {return useLombok;}
 					public String list() {
 						StringBuilder sb = new StringBuilder("[");
 						if(useSpringMvc) sb.append("SpringMVC").append(",");
@@ -259,6 +262,7 @@ public final class CodeGen {
 						if(useStruts) sb.append("Struts").append(",");
 						if(useMyBatis) sb.append("MyBatis").append(",");
 						if(useHibernate) sb.append("Hibernate").append(",");
+						if(useLombok) sb.append("Lombok").append(",");
 						return sb.append("]").toString();
 						}
 				};
@@ -374,6 +378,12 @@ public final class CodeGen {
 		 * @return
 		 */
 		boolean useHibernate();
+		
+		/**
+		 * enable lombok
+		 * @return
+		 */
+		boolean useLombok();
 		
 		/**
 		 * list used framework as string

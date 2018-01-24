@@ -47,7 +47,7 @@
 <#t>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 </#if>
-<${ROOT} namespace="ml.iamwhatiam.tao.ddd.${namespace}.mapper.${bean.name}">
+<${ROOT} namespace="ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao</#if>.${bean.name?cap_first}DAO">
 
 	<#if config?contains("iBatis")>
     <typeAlias alias="${bean.name}DO" type="ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.domain</#if>.${bean.name?cap_first}Domain" />
@@ -94,8 +94,8 @@
 	</#if>
 	</#list>
 	</sql>
-	
-	
+
+
 	<insert id="insert" ${PARAMETER_TYPE}="${bean.name}DO">
 	INSERT INTO ${table.name} 
 	(
