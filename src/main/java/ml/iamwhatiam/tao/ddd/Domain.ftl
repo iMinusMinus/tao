@@ -21,9 +21,13 @@ import ${im};
  * @since ${date?string('yyyy-MM-dd')}
  * @version 0.0.1
  *
- */
-<#if config?contains("lombok")>@Getter
-@Setter</#if>
+ */<#rt>
+<#if config?contains("lombok")>
+<#nt>
+@Getter
+@Setter
+</#if>
+<#nt>
 public class ${bean.name?cap_first}Domain extends Taichi {
  
     private static final long serialVersionUID = 1L;
@@ -40,10 +44,11 @@ public class ${bean.name?cap_first}Domain extends Taichi {
  	</#list>
  	</#if>
  	private ${software.getSimpleName(property.type)} ${property.name}<#if (property.defaultValue)??> = <#if property.defaultValue?is_string>"</#if>${property.defaultValue}<#if property.defaultValue?is_string>"</#if></#if>;
- 	
  	</#list>
+ 	<#nt>
  	<#if !config?contains("lombok")>
  	<#list bean.properties as property>
+ 	
  	public ${software.getSimpleName(property.type)} <#if property.type == "boolean">is<#else>get</#if>${property.name?cap_first}() {
  		return ${property.name};
  	}
@@ -52,7 +57,7 @@ public class ${bean.name?cap_first}Domain extends Taichi {
  		this.${property.name} = ${property.name};
  	}
  	</#list>
- 	<#/if>
+ 	</#if>
  	
  	@Override
  	public String toString() {

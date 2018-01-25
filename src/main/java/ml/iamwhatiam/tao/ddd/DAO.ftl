@@ -12,9 +12,13 @@ import ml.iamwhatiam.tao.dao.CrudDao;
   * @author iMinusMinus
   * @since ${date?string('yyyy-MM-dd')}
   * @version 0.0.1
-  */
-<#if config?contanis("MyBatis") && !config?contains("iBatis"))>@Repository("${bean.name}Dao")</#if>
-public class ${bean.name?cap_first}DAO extends CrudDao<${bean.name?cap_first}Domain> {
+  */<#rt>
+<#if config?contains("MyBatis") && !config?contains("iBatis")>
+<#nt>
+@Repository("${bean.name}Dao")
+</#if>
+<#nt>
+public interface ${bean.name?cap_first}DAO<${bean.name?cap_first}Domain> extends CrudDao<${bean.name?cap_first}Domain> {
 
 
 }

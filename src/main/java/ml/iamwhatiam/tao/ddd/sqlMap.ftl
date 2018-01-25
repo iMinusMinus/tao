@@ -56,18 +56,18 @@
 	<parameterMap id="${bean.name}DO" type="ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.domain</#if>.${bean.name?cap_first}Domain" />
 	</#if>
 	
-	<resultMap ${TYPE}="${bean.name}DO" id="${bean.name}ResultMap">
+	<resultMap ${TYPE}="${bean.name}DO" id="BaseResultMap">
 	<#list table.columns as column>
 		<#list bean.properties as property>
 		<#if property.name?upper_case == column.name?replace('_', '')?upper_case>
 		<#if property.name == "oid">
 		<${ID} property="oid" column="id" javaType="long" />
-		<#elseif property.type is Domain>
-		<${ONE_TO_ONE} property="${property.name}" resultMap="${namespace}.${ResultMap}" columnPrefix="${column.referencesTable.name}" />
-		<#elseif property.type is Collection or Array>
-		<${ONE_TO_MANY} property="${property.name}" javaType="java.util.ArrayList" column="${column.name}" select="${selectId}" />
+		<#elseif property.type == "java.lang.List" || property.type == "java.lang.Colletion">
+		<${ONE_TO_MANY} property="${property.name}" javaType="java.util.ArrayList" column="${column.name}" select="${namespace}.findSelective" />
+		<#elseif table.fks?? && table.fks?size() > 0>
+		<${ONE_TO_ONE} property="${property.name}" resultMap="${namespace}.BaseResultMap" columnPrefix="${column.table.fks[0].name}" />
 		<#else>
-		<result column="${column.name}" property="${property.name}" javaType="${property.type}" /><!-- jdbcType=${column.dataType} -->
+		<result column="${column.name}" property="${property.name}" javaType="${property.type}" /><!-- jdbcType=${column.dataType.dataType} -->
 		</#if>
 		</#if>
 		</#list>
@@ -79,11 +79,12 @@
 		<#list table.columns as column >
 		${column.name}<#sep>,
 		</#list>
+	<#nt>
 	</sql>
 	
 	<sql id="condition">
 	<#list table.columns as column>
-	<#if column.defaultValue?? && column.defaultValue != "''">
+	<#if column.defaultValue?? && column.defaultValue?length gt 0>
 	${IS_NOT_EQUAL_START}<@tool.snake2camel snakeCase="${column.name}" />${IS_NOT_EQUAL_STOP}${column.defaultValue}${IS_NOT_EQUAL_END}
 		AND T.${column.name} = ${START_TAG}<@tool.snake2camel snakeCase="${column.name}" />${END_TAG}
 	${IS_NOT_EQUAL_END_TAG}	
@@ -106,13 +107,14 @@
 	<#list table.columns as column>
 	${START_TAG}<@tool.snake2camel snakeCase=column.name />${END_TAG}<#sep>,
 	</#list>
+	<#nt>
 	)
 	</insert>
 	<insert id="insertSelective" ${PARAMETER_TYPE}="${bean.name}DO">
 	INSERT INTO ${table.name} 
 	(
 		<#list table.columns as column>
-	<#if column.defaultValue?? && column.defaultValue != "''">
+	<#if column.defaultValue?? && column.defaultValue?length gt 0>
 	${IS_NOT_EQUAL_START}<@tool.snake2camel snakeCase="${column.name}" />${IS_NOT_EQUAL_STOP}${column.defaultValue}${IS_NOT_EQUAL_END}
 		${START_TAG}<@tool.snake2camel snakeCase="${column.name}" />${END_TAG}<#sep>,</#sep>
 	${IS_NOT_EQUAL_END_TAG}	
@@ -126,7 +128,7 @@
 	VALUES 
 	(
 		<#list table.columns as column>
-			<#if column.defaultValue?? && column.defaultValue != "''">
+			<#if column.defaultValue?? && column.defaultValue?length gt 0>
 	${IS_NOT_EQUAL_START}<@tool.snake2camel snakeCase="${column.name}" />${IS_NOT_EQUAL_STOP}${column.defaultValue}${IS_NOT_EQUAL_END}
 		${START_TAG}<@tool.snake2camel snakeCase="${column.name}" />${END_TAG}<#sep>,</#sep>
 	${IS_NOT_EQUAL_END_TAG}	
@@ -136,10 +138,10 @@
 	${IS_NOT_NULL_END_TAG}
 			</#if>
 		</#list>	
-	)
+	<#nt>)
 	</insert>
 	
-	<select id="findById" ${PARAMETER_TYPE}="long" resultMap="${bean.name}ResultMap">
+	<select id="findById" ${PARAMETER_TYPE}="long" resultMap="BaseResultMap">
 	SELECT <include refid="columns" /> FROM ${table.name} T WHERE T.ID = ${START_TAG}id${END_TAG}
 	</select>
 	<select id="findSelective" ${PARAMETER_TYPE}="${bean.name}DO" resultMap="${bean.name}ResultMap">
@@ -149,7 +151,7 @@
 		<include refid="condition" />		
 		${WHERE_END_TAG}
 	</select>
-	<select id="count" ${PARAMETER_TYPE}="${bean.name}ResultMap" resultMap="long">
+	<select id="count" ${PARAMETER_TYPE}="${bean.name}DO" resultMap="long">
 	SELECT COUNT(1) 
 	  FROM ${table.name} T 
 	${WHERE_START_TAG}
@@ -161,7 +163,7 @@
 	UPDATE ${table.name}
 		${SET_START_TAG}
 			<#list table.columns as column>
-			${IS_NOT_NULL_START}<@tool.snake2camel snakeCase=column.name />"${IS_NOT_NULL_END}
+			${IS_NOT_NULL_START}<@tool.snake2camel snakeCase=column.name />${IS_NOT_NULL_END}
 		   T.${column.name} = ${START_TAG}<@tool.snake2camel snakeCase=column.name />${END_TAG},
 			${IS_NOT_NULL_END_TAG}
 			</#list>
@@ -173,7 +175,7 @@
 	UPDATE ${table.name}
 		${SET_START_TAG}
 			<#list table.columns as column>
-			${IS_NOT_NULL_START}<@tool.snake2camel snakeCase=column.name />"${IS_NOT_NULL_END}
+			${IS_NOT_NULL_START}<@tool.snake2camel snakeCase=column.name />${IS_NOT_NULL_END}
 		   T.${column.name} = ${START_TAG}<@tool.snake2camel snakeCase=column.name />${END_TAG},
 			${IS_NOT_NULL_END_TAG}
 			</#list>

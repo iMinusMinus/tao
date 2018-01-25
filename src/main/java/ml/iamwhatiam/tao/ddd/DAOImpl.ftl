@@ -23,32 +23,32 @@ import org.springframework.stereotype.Repository;
 public class ${bean.name?cap_first}DAOImpl extends SqlMapClientDaoSupport implements ${bean.name?cap_first}DAO<${bean.name?cap_first}Domain> {
 
 	public List<${bean.name?cap_first}Domain> findAll() {
-	    return getSqlMapClientTemplate().queryForList("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao.${bean.name}DAO.findSelective");
+	    return getSqlMapClientTemplate().queryForList("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao</#if>.${bean.name?cap_first}DAO.findSelective");
 	}
 	
 	public List<${bean.name?cap_first}Domain> query(${bean.name?cap_first}Domain condition, int offset, int limit) {
-	    return getSqlMapClientTemplate().queryForList("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao.${bean.name}DAO.findSelective", condition, offset, limit);
+	    return getSqlMapClientTemplate().queryForList("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao</#if>.${bean.name?cap_first}DAO.findSelective", condition, offset, limit);
 	}
 	
 	public long count(${bean.name?cap_first}Domain condition) {
-	    return getSqlMapClientTemplate().queryForObject("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao.${bean.name}DAO.count", condition);
+	    return getSqlMapClientTemplate().queryForObject("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao</#if>.${bean.name?cap_first}DAO.count", condition);
 	}
 	
 	public ${bean.name?cap_first}Domain findOne(long id) {
-	    return getSqlMapClientTemplate().queryForObject("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao.${bean.name}DAO.findById", id);
+	    return getSqlMapClientTemplate().queryForObject("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao</#if>.${bean.name?cap_first}DAO.findById", id);
 	}
 	
 	public long save(${bean.name?cap_first}Domain domain) {
-	    return getSqlMapClientTemplate().insert("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao.${bean.name}DAO.insertSelective", domain);
+	    return getSqlMapClientTemplate().insert("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao</#if>.${bean.name?cap_first}DAO.insertSelective", domain);
 	}
 	
 	public boolean update(${bean.name?cap_first}Domain domain) {
-	    int effected = getSqlMapClientTemplate().update("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao.${bean.name}DAO.updateById", domain);
+	    int effected = getSqlMapClientTemplate().update("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao</#if>.${bean.name?cap_first}DAO.updateById", domain);
 	    return effected > 0;
 	}
 	
 	public boolean delete(long id) {
-	    int effected = getSqlMapClientTemplate().delete("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao.${bean.name}DAO.deleteById", id);
+	    int effected = getSqlMapClientTemplate().delete("ml.iamwhatiam.tao.ddd.${namespace}<#if !samePackage>.dao</#if>.${bean.name?cap_first}DAO.deleteById", id);
 	    return effected > 0;
 	}
 	
