@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 <#-- no need to import if Controller, Service, DAO and indeed POJOs are in same package -->
@@ -34,6 +35,7 @@ public class ${bean.name?cap_first}Controller {
     @RequestMapping(value = "/${bean.name}", method = RequestMethod.GET)
     @ResponseBody
     public List<${bean.name?cap_first}VO> index(@RequestParam(value = "pageNumber", defaultValue = 0) int pageNumber, @RequestParam(name = "pageSize", defaultValue = 10) int pageSize) {
+        //TODO PagingAndSorting
         return service.findAll();
     }
 
@@ -54,14 +56,16 @@ public class ${bean.name?cap_first}Controller {
     @ResquestMapping(value = "/${bean.name}", method = RequestMethod.POST)
     @ResponseBody
     public ${bean.name?cap_first}VO create(@Valid ${bean.name?cap_first}VO form, BindingResult br) {
-    	service.save(form);
+        //TODO validation
+        service.save(form);
         return form;
     }
 
     @RequestMapping(value = "/${bean.name}/{id}", method = RequestMethod.PUT)
     @ResponseBody
     public ${bean.name?cap_first}VO update(@PathVariable("id") long id, @Valid ${bean.name?cap_first}VO form, BindingResult br) {
-    	service.update(form);
+        //TODO validation
+        service.update(form);
         return form;
     }
 
