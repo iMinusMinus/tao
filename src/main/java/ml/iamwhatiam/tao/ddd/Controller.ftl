@@ -33,7 +33,7 @@ public class ${bean.name?cap_first}Controller {
 
     @RequestMapping(value = "/${bean.name}", method = RequestMethod.GET)
     @ResponseBody
-    public List<${bean.name?cap_first}VO> index() {
+    public List<${bean.name?cap_first}VO> index(@RequestParam(value = "pageNumber", defaultValue = 0) int pageNumber, @RequestParam(name = "pageSize", defaultValue = 10) int pageSize) {
         return service.findAll();
     }
 
@@ -60,7 +60,7 @@ public class ${bean.name?cap_first}Controller {
 
     @RequestMapping(value = "/${bean.name}/{id}", method = RequestMethod.PUT)
     @ResponseBody
-    public ${bean.name?cap_first}VO edit(@PathVariable("id") long id, @Valid ${bean.name?cap_first}VO form, BindingResult br) {
+    public ${bean.name?cap_first}VO update(@PathVariable("id") long id, @Valid ${bean.name?cap_first}VO form, BindingResult br) {
     	service.update(form);
         return form;
     }
